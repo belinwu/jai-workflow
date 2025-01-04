@@ -15,6 +15,12 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
+      - name: Print secrets for verification
+        run: |
+          echo "OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}"
+          echo "OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}"
+          echo "GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}"
+          echo "GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}"
       - name: Install gpg secret key
         shell: bash
         run: |
@@ -26,7 +32,27 @@ jobs:
         shell: bash
         run: |
           # Setup maven settings
-          echo "<settings><servers><server><id>ossrh</id><username>${{ secrets.OSSRH_USERNAME }}</username><password>${{ secrets.OSSRH_PASSWORD }}</password></server></servers><profiles><profile><id>ossrh</id><activation><activeByDefault>true</activeByDefault></activation><properties><gpg.executable>gpg</gpg.executable><gpg.passphrase>${{ secrets.GPG_PASSPHRASE }}</gpg.passphrase></properties></profile></profiles></settings>" > ~/.m2/settings.xml
+          echo "<settings>
+                  <servers>
+                    <server>
+                      <id>ossrh</id>
+                      <username>${{ secrets.OSSRH_USERNAME }}</username>
+                      <password>${{ secrets.OSSRH_PASSWORD }}</password>
+                    </server>
+                  </servers>
+                  <profiles>
+                    <profile>
+                      <id>ossrh</id>
+                      <activation>
+                        <activeByDefault>true</activeByDefault>
+                      </activation>
+                      <properties>
+                        <gpg.executable>gpg</gpg.executable>
+                        <gpg.passphrase>${{ secrets.GPG_PASSPHRASE }}</gpg.passphrase>
+                      </properties>
+                    </profile>
+                  </profiles>
+                </settings>" > ~/.m2/settings.xml
       - name: Publish SNAPSHOT to Sonatype (Maven Central)
         run: |
           cat /home/runner/.m2/settings.xml
