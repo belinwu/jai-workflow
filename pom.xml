@@ -7,11 +7,11 @@
   <groupId>com.github.czelabueno</groupId>
   <artifactId>jai-workflow-parent</artifactId>
   <version>0.2.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
 
   <name>JavAI Workflow</name>
   <description>JavAI Workflow: Flexible workflow engine to build agentic, enterprise and modular RAG applications for Java</description>
   <url>https://github.com/czelabueno/jai-workflow</url>
-  <packaging>pom</packaging>
 
   <issueManagement>
     <system>GitHub</system>
@@ -24,17 +24,15 @@
   </ciManagement>
 
   <scm>
-    <url>https://github.com/czelabueno/jai-workflow/tree/main</url>
     <connection>scm:git:git://github.com/czelabueno/jai-workflow.git</connection>
     <developerConnection>scm:git:ssh://github.com:czelabueno/jai-workflow.git</developerConnection>
-    <tag>HEAD</tag>
+    <url>https://github.com/czelabueno/jai-workflow/tree/main</url>
   </scm>
 
   <licenses>
     <license>
       <name>The Apache License, Version 2.0</name>
       <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-      <distribution>repo</distribution>
     </license>
   </licenses>
 
@@ -44,7 +42,7 @@
       <name>Carlos Zela</name>
       <email>c.zelabueno@gmail.com</email>
       <organization>jAI Workflow</organization>
-      <url>https://github.com/czelabueno/jai-workflow</url>
+      <organizationUrl>https://github.com/czelabueno/jai-workflow</organizationUrl>
     </developer>
   </developers>
 
@@ -291,6 +289,27 @@
           </execution>
         </executions>
       </plugin>
+      <!-- Maven GPG Plugin -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-gpg-plugin</artifactId>
+        <version>1.6</version>
+        <executions>
+          <execution>
+            <id>sign-artifacts</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>sign</goal>
+            </goals>
+            <configuration>
+              <gpgArguments>
+                <argument>--pinentry-mode</argument>
+                <argument>loopback</argument>
+              </gpgArguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <!-- Sonatype Plugin -->
       <plugin>
         <groupId>org.sonatype.plugins</groupId>
@@ -395,6 +414,7 @@
             <configuration>
               <serverId>ossrh</serverId>
               <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+              <skipStagingRepositoryClose>true</skipStagingRepositoryClose>
               <autoReleaseAfterClose>false</autoReleaseAfterClose>
             </configuration>
           </plugin>
