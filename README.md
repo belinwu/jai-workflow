@@ -5,7 +5,56 @@
 
 An open-source Java library to build, package, integrate, orchestrate and monitor agentic AI systems for java developers 💡
 
+![Standalone Architecture](docs/workflow-code-black.png)
+
+<details>
+  <summary>☕ Java code</summary>
+
+```java
+class MyStatefulBean extends AbstractStatefulBean {
+  private List<String> documents;
+  // other additional input/output fields that you want to store
+}
+
+StreamingChatLanguageModel model = OpenAiStreamingChatModel.builder()
+        .apiKey(System.getenv("OPENAI_API_KEY"))
+        .modelName(GPT_4_O_MINI)
+        .build();
+
+var parserDocsNode = Node.from("Docs", obj -> transformDocsFromUrl(obj, uris));
+var retrieveNode = Node.from("Vector DB", obj -> extractRelevantDocumentsFromVectorDB(obj));
+var generateAnswerNode = StreamingNode.from("Generate",obj -> generateAnswer(obj), model);
+
+var jAiWorkflow = DefaultJAiWorkflow.<MyStatefulBean>builder()
+        .statefulBean(new MyStatefulBean())
+        .runStream(true)
+        .nodes(List.of(parserDocsNode, retrieveNode, generateAnswerNode))
+        .build();
+
+var stateWorkflow = jAiWorkflow.workflow();
+stateWorkflow.putEdge(parserDocsNode, retrieveNode);
+stateWorkflow.putEdge(retrieveNode,
+                      Conditional.eval(obj -> obj.isEnoughData() ? generateAnswerNode : parserDocsNode));
+        stateWorkflow.putEdge(generateAnswerNode, WorkflowStateName.END);
+stateWorkflow.startNode(retrieveNode);
+
+// Chat with your JAiWorkflow
+var question = "Summarizes the importance of building AI agentic systems";
+Flux<String> response = jAiWorkflow.answerStream(question);
+String answer = jAiWorkflow.answer(question);
+```
+</details>
+
+> 🌟 **Starring me**: If you find this repository beneficial, don't forget to give it a star! 🌟 It's a simple way to show your appreciation and help this project grow!
+
+## Overview
+JavAI Workflow (named initially Langchain4j-workflow) is a dynamic, stateful workflow engine crafted as a Java library. It empowers java developers with granular control over the orchestrated workflows as a graph, iteratively, with cycles, flexibility, control, and conditional decisions. This engine is a game-changer for building sophisticated AI applications, such as multiples RAG-based approaches using modern paradigms and agent architectures. It enables the crafting of custom behavior, leading to a significant reduction in hallucinations and an increase in response reliability.
+
+jAI Workflow is influenced by [LangFlow](https://github.com/langflow-ai/langflow), [LangGraph](https://langchain-ai.github.io/langgraph/tutorials/introduction/), [Graphviz](https://graphviz.gitlab.io/Gallery/directed/).
+
+## Anatomy
 ![Workflow Image](docs/jai-worflow-anatomy.png)
+
 <details>
   <summary>Node, Module, and Workflow Definitions</summary>
 
@@ -17,26 +66,17 @@ A `Module` is a collection of nodes grouped together to perform a higher-level f
 
 ### Workflow
 A `Workflow` is a directed graph of nodes, modules and edges that defines the sequence of operations to be performed. It manages the state transitions and execution flow, ensuring that each node processes the stateful bean in the correct order.
-
 </details>
-
-
-> 🌟 **Starring me**: If you find this repository beneficial, don't forget to give it a star! 🌟 It's a simple way to show your appreciation and help this project grow!
-
-## Overview
-JavAI Workflow (named initially Langchain4j-workflow) is a dynamic, stateful workflow engine crafted as a Java library. It empowers java developers with granular control over the orchestrated workflows as a graph, iteratively, with cycles, flexibility, control, and conditional decisions. This engine is a game-changer for building sophisticated AI applications, such as multiples RAG-based approaches using modern paradigms and agent architectures. It enables the crafting of custom behavior, leading to a significant reduction in hallucinations and an increase in response reliability.
-
-jAI Workflow is influenced by [LangFlow](https://github.com/langflow-ai/langflow), [LangGraph](https://langchain-ai.github.io/langgraph/tutorials/introduction/), [Graphviz](https://graphviz.gitlab.io/Gallery/directed/).
 
 ## Principles:
 - **Java-based** jAI workflows are configuration as code (java) and agnostic to AI models, enabling you can define custom advanced and dynamic workflows just writing Java code.
 - **Stateful**: jAI Workflow is a stateful engine, enabling you to design custom states as POJO and transitions. This feature provides a robust foundation for managing the flow and state of your application.
 - **Graph-Based**: The workflow is graph-based, offering the flexibility to define custom workflows with multiple directions such as one-way, round trip, loop, recursive and more. This feature allows for intricate control over the flow of your application.
 - **Flexible**: jAI Workflow is designed with flexibility in mind. You can define custom workflows, modules or agents to build RAG systems as LEGO-like. A module can be decoupled and integrated in any other workflow.
-- **Ecosystem integration**: jAI workflow will be integrated with any java AI project. It provides a comprehensive toolset for building advanced java AI applications.
+- **AI Ecosystem integration**: jAI workflow is designed to be potentially integrable with any emerging AI technology in the future for java.
 - **Publish as API**: jAI Workflow can be published as an API as entrypoint once you have defined your custom workflow. This feature allows you to expose your workflow as a service.
 - **Observability**: jAI Workflow provides observability features to monitor the execution of the workflow, trace inputs and outputs, and debug the flow of your application.
-- **Scalable**: jAI Workflow can be deployed as any java project as standalone or distributed mode as containers in any cloud provider or kubernetes environment. Each module can run in a different JVM env or container for scalability in production environments.
+- **Scalable**: jAI Workflow can be deployed as any java project as standalone or distributed through containers in any cloud provider or kubernetes environment. Each module can run in a different JVM env or container for scalability in production environments.
 
 ## 🚀 Features
 ### v.0.2.0 Features
@@ -74,7 +114,7 @@ jAI Workflow is influenced by [LangFlow](https://github.com/langflow-ai/langflow
   ![jai-workflow-playground-prototype](docs/jai-workflow-playground.gif)
   > _This is a prototype, the final version will be available soon. Open an issue if you want to share your ideas or contribute to this feature._
 
-## Architecture
+## Reference Architectures
 jAI Workflow is designed with a modular architecture, enabling you to define custom workflows, modules, or agents to build RAG systems as LEGO-like. A module can be decoupled and integrated into any other workflow.
 
 ### Standalone Architecture
@@ -83,7 +123,7 @@ jAI Workflow is designed with a modular architecture, enabling you to define cus
 ### Distributed Architecture
 ![Desired Architecture](docs/jai-distributed-architecture.png)
 
-> 📖 Full documentation will be available soon
+> 📖 Full documentation and examples will be available soon and regarding new features are planned for the next releases.
 
 ## 💡How to use in your Java project
 In **jAI Workflow**, the notion of state plays a pivotal role. Every execution of the graph initiates a state, which is then transferred among the nodes during their execution. Each node, after its execution, updates this internal state with its own return value. The method by which the graph updates its internal state is determined by user-defined functions.
@@ -105,7 +145,7 @@ If you would want to use jAI workflow without LangChain4j or with other framewor
   <version>0.2.0</version> <!--Change to the latest version-->
 </dependency>
 ```
-### langChain4j-workflow example
+### Example with langchain4j
 Define a stateful bean with fields that will be used to store the state of the workflow:
 ```java
 // Define a stateful bean
@@ -281,10 +321,10 @@ You can generate a workflow image with all computed transitions:
 ```
 ![Workflow Image](jai-workflow-core/image/my-workflow.svg)
 
-Check the full example in the [langchain4j-worflow tests](https://github.com/czelabueno/jai-workflow/blob/main/jai-workflow-core/src/test/java/com/github/czelabueno/jai/workflow/langchain4j/JAiWorkflowIT.java)
+Check the full example in the [jai-workflow-langchain4j tests](https://github.com/czelabueno/jai-workflow/blob/main/jai-workflow-langchain4j/src/test/java/com/github/czelabueno/jai/workflow/langchain4j/JAiWorkflowIT.java)
 
 ## LLM examples
-You can check all examples in the [langchain4j-worflow-examples](https://github.com/czelabueno/langchain4j-workflow-examples) repository where show you how-to implement multiple RAG patterns, agent architectures and AI papers using LangChain4j and jAI Workflow. 
+You can check all examples in the [jai-workflow-langchain4j-examples](https://github.com/czelabueno/jai-workflow-langchain4j-examples) repository where show you how-to implement multiple RAG patterns, agent architectures and AI papers using LangChain4j and jAI Workflow. 
 
 > Please note that examples can be modified and more examples will be added over time.
 
@@ -324,3 +364,19 @@ Help us to maturity this project and make it more useful for the java community.
 
 ## 🧑🏻‍💻 Authors
 - Carlos Zela [@c_zela](https://x.com/c_zela) [czelabueno](https://linkedin.com/in/czelabueno)
+
+<style>
+  details {
+    margin: 1em 0;
+    padding: 0.5em;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+  summary {
+    font-weight: bold;
+    cursor: pointer;
+  }
+  summary:hover {
+    color: #0073e6;
+  }
+</style>
