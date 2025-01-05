@@ -15,12 +15,6 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
-      - name: Print secrets for verification
-        run: |
-          echo "OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}"
-          echo "OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}"
-          echo "GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}"
-          echo "GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}"
       - name: Install gpg secret key
         shell: bash
         run: |
@@ -55,8 +49,6 @@ jobs:
                 </settings>" > ~/.m2/settings.xml
       - name: Publish SNAPSHOT to Sonatype (Maven Central)
         run: |
-          cat /home/runner/.m2/settings.xml
           mvn -B --fail-at-end \
             -DskipTests -DskipITs \
             clean deploy
-
