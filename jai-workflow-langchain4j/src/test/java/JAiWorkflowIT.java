@@ -18,6 +18,8 @@ import com.github.czelabueno.jai.workflow.langchain4j.workflow.StatefulBeanMock;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.github.czelabueno.jai.workflow.langchain4j.workflow.NodeFunctionsMock.generate;
+import static com.github.czelabueno.jai.workflow.langchain4j.workflow.NodeFunctionsMock.retrieve;
 import static java.util.stream.Collectors.joining;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -64,12 +66,12 @@ class JAiWorkflowIT {
         StatefulBeanMock statefulBean = new StatefulBeanMock();
 
         // Define nodes with your custom functions
-        Node<StatefulBeanMock, StatefulBeanMock> retrieveNode = Node.from("Retrieve Node", obj -> NodeFunctionsMock.retrieve(obj, documents));
-        Node<StatefulBeanMock, StatefulBeanMock> gradeDocumentsNode = Node.from("Grade Documents Node", obj -> NodeFunctionsMock.gradeDocuments(obj));
-        Node<StatefulBeanMock, StatefulBeanMock> generateNode = Node.from("Generate Node", obj -> NodeFunctionsMock.generate(obj, model));
+        Node<StatefulBeanMock, StatefulBeanMock> retrieveNode = Node.from("Retrieve Node", obj -> retrieve(obj, documents));
+        Node<StatefulBeanMock, StatefulBeanMock> gradeDocumentsNode = Node.from("Grade Documents Node", NodeFunctionsMock::gradeDocuments);
+        Node<StatefulBeanMock, StatefulBeanMock> generateNode = Node.from("Generate Node", obj -> generate(obj, model));
         StreamingNode<StatefulBeanMock> generateStreamingNode = StreamingNode.from(
                 "Generate Node",
-                obj -> NodeFunctionsMock.generateUserMessageFromStatefulBean(obj),
+                NodeFunctionsMock::generateUserMessageFromStatefulBean,
                 streamingModel);
 
         // Build workflows of the synchronous and streaming ways
