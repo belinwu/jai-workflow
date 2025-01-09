@@ -2,9 +2,13 @@ name: jAI Workflow Snapshot-release
 
 on:
   workflow_dispatch:
+  push:
+      branches:
+      - main
 
 jobs:
   snapshot-release:
+    if: github.repository == 'czelabueno/jai-workflow'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,40 +19,14 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
-      - name: Install gpg secret key
-        shell: bash
-        run: |
-          # Install gpg secret key
-          cat <(echo -e "${{ secrets.GPG_PRIVATE_KEY }}") | gpg --batch --import
-          # Verify gpg secret key
-          gpg --list-secret-keys --keyid-format LONG
-      - name: Setup Maven settings
-        shell: bash
-        run: |
-          # Setup maven settings
-          echo "<settings>
-                  <servers>
-                    <server>
-                      <id>ossrh</id>
-                      <username>${{ secrets.OSSRH_USERNAME }}</username>
-                      <password>${{ secrets.OSSRH_PASSWORD }}</password>
-                    </server>
-                  </servers>
-                  <profiles>
-                    <profile>
-                      <id>ossrh</id>
-                      <activation>
-                        <activeByDefault>true</activeByDefault>
-                      </activation>
-                      <properties>
-                        <gpg.executable>gpg</gpg.executable>
-                        <gpg.passphrase>${{ secrets.GPG_PASSPHRASE }}</gpg.passphrase>
-                      </properties>
-                    </profile>
-                  </profiles>
-                </settings>" > ~/.m2/settings.xml
-      - name: Publish SNAPSHOT to Sonatype (Maven Central)
+          server-id: ossrh
+          server-username: OSSRH_USERNAME
+          server-password: OSSRH_PASSWORD
+      - name: Publish SNAPSHOT to Sonatype
         run: |
           mvn -B --fail-at-end \
             -DskipTests -DskipITs \
             clean deploy
+        env:
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}

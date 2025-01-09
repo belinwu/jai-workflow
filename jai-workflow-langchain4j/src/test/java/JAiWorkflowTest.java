@@ -1,4 +1,4 @@
-import com.github.czelabueno.jai.workflow.langchain4j.JAiWorkflow;
+import io.github.czelabueno.jai.workflow.langchain4j.JAiWorkflow;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
 import org.junit.jupiter.api.BeforeEach;
