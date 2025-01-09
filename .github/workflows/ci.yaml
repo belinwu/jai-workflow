@@ -3,10 +3,23 @@ name: jAI Workflow CI
 on:
   push:
       branches:
-      - main
+        - main
+      paths-ignore:
+        - '.gitignore'
+        - '*.md'
+        - 'LICENSE'
+        - '.github/*.md'
+        - '.github/*.yml'
   pull_request:
       branches:
-      - main
+        - main
+      paths-ignore:
+        - '.gitignore'
+        - '*.md'
+        - 'LICENSE'
+        - '.github/*.md'
+        - '.github/*.yml'
+  workflow_dispatch:
 
 jobs:
   java_build:
