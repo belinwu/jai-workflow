@@ -36,19 +36,19 @@ jobs:
              GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
              OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
              OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-    create-github-release:
-        name: Create GitHub Release
-        needs: release
-        runs-on: ubuntu-latest
-        steps:
-            - name: Create GitHub Release
-              shell: bash
-              env:
-                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                 tag: ${{ github.ref_name }}
-              run: |
-                gh release create "$tag" \
-                  --repo "${{ github.repository }}" \
-                  --title "$tag" \
-                  --generate-notes \
-                  --latest
+  create-github-release:
+    name: Create GitHub Release
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+        - name: Create GitHub Release
+          shell: bash
+          env:
+             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+             tag: ${{ github.ref_name }}
+          run: |
+            gh release create "$tag" \
+              --repo "${{ github.repository }}" \
+              --title "$tag" \
+              --generate-notes \
+              --latest
