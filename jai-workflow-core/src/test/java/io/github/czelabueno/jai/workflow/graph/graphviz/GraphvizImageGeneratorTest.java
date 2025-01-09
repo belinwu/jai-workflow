@@ -1,7 +1,7 @@
-package com.github.czelabueno.jai.workflow.graph.graphviz;
+package io.github.czelabueno.jai.workflow.graph.graphviz;
 
-import com.github.czelabueno.jai.workflow.node.Node;
-import com.github.czelabueno.jai.workflow.transition.Transition;
+import io.github.czelabueno.jai.workflow.node.Node;
+import io.github.czelabueno.jai.workflow.transition.Transition;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

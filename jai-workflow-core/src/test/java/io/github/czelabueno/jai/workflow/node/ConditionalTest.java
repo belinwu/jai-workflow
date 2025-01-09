@@ -1,4 +1,4 @@
-package com.github.czelabueno.jai.workflow.node;
+package io.github.czelabueno.jai.workflow.node;
 
 import org.junit.jupiter.api.Test;
 

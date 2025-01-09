@@ -1,11 +1,11 @@
-package com.github.czelabueno.jai.workflow.langchain4j.internal;
+package io.github.czelabueno.jai.workflow.langchain4j.internal;
 
-import com.github.czelabueno.jai.workflow.DefaultStateWorkflow;
-import com.github.czelabueno.jai.workflow.StateWorkflow;
-import com.github.czelabueno.jai.workflow.langchain4j.AbstractStatefulBean;
-import com.github.czelabueno.jai.workflow.langchain4j.JAiWorkflow;
-import com.github.czelabueno.jai.workflow.langchain4j.node.StreamingNode;
-import com.github.czelabueno.jai.workflow.node.Node;
+import io.github.czelabueno.jai.workflow.DefaultStateWorkflow;
+import io.github.czelabueno.jai.workflow.StateWorkflow;
+import io.github.czelabueno.jai.workflow.langchain4j.AbstractStatefulBean;
+import io.github.czelabueno.jai.workflow.langchain4j.JAiWorkflow;
+import io.github.czelabueno.jai.workflow.langchain4j.node.StreamingNode;
+import io.github.czelabueno.jai.workflow.node.Node;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
 import lombok.Builder;

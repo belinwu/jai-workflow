@@ -1,7 +1,7 @@
-package com.github.czelabueno.jai.workflow.langchain4j.node;
+package io.github.czelabueno.jai.workflow.langchain4j.node;
 
-import com.github.czelabueno.jai.workflow.langchain4j.AbstractStatefulBean;
-import com.github.czelabueno.jai.workflow.node.Node;
+import io.github.czelabueno.jai.workflow.langchain4j.AbstractStatefulBean;
+import io.github.czelabueno.jai.workflow.node.Node;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;
@@ -12,7 +12,6 @@ import lombok.NonNull;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;

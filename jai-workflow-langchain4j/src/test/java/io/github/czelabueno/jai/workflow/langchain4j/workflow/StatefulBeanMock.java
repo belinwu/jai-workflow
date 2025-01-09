@@ -1,6 +1,6 @@
-package com.github.czelabueno.jai.workflow.langchain4j.workflow;
+package io.github.czelabueno.jai.workflow.langchain4j.workflow;
 
-import com.github.czelabueno.jai.workflow.langchain4j.AbstractStatefulBean;
+import io.github.czelabueno.jai.workflow.langchain4j.AbstractStatefulBean;
 import lombok.Data;
 
 import java.util.List;

@@ -1,7 +1,7 @@
-package com.github.czelabueno.jai.workflow.transition;
+package io.github.czelabueno.jai.workflow.transition;
 
-import com.github.czelabueno.jai.workflow.node.Node;
-import com.github.czelabueno.jai.workflow.WorkflowStateName;
+import io.github.czelabueno.jai.workflow.node.Node;
+import io.github.czelabueno.jai.workflow.WorkflowStateName;
 import lombok.NonNull;
 
 /**

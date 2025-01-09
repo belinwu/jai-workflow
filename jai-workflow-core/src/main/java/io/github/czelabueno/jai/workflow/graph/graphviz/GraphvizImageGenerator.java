@@ -1,9 +1,9 @@
-package com.github.czelabueno.jai.workflow.graph.graphviz;
+package io.github.czelabueno.jai.workflow.graph.graphviz;
 
-import com.github.czelabueno.jai.workflow.WorkflowStateName;
-import com.github.czelabueno.jai.workflow.node.Node;
-import com.github.czelabueno.jai.workflow.transition.Transition;
-import com.github.czelabueno.jai.workflow.graph.GraphImageGenerator;
+import io.github.czelabueno.jai.workflow.WorkflowStateName;
+import io.github.czelabueno.jai.workflow.node.Node;
+import io.github.czelabueno.jai.workflow.transition.Transition;
+import io.github.czelabueno.jai.workflow.graph.GraphImageGenerator;
 import guru.nidi.graphviz.engine.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

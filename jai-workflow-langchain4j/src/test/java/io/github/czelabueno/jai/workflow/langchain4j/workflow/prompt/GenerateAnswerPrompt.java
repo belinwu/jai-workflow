@@ -1,4 +1,4 @@
-package com.github.czelabueno.jai.workflow.langchain4j.workflow.prompt;
+package io.github.czelabueno.jai.workflow.langchain4j.workflow.prompt;
 
 import dev.langchain4j.model.input.structured.StructuredPrompt;
 

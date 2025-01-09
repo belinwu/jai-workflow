@@ -1,4 +1,4 @@
-package com.github.czelabueno.jai.workflow.langchain4j.workflow;
+package io.github.czelabueno.jai.workflow.langchain4j.workflow;
 
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.loader.UrlDocumentLoader;
@@ -11,7 +11,7 @@ import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.input.Prompt;
 import dev.langchain4j.model.input.structured.StructuredPromptProcessor;
 import dev.langchain4j.rag.content.Content;
-import com.github.czelabueno.jai.workflow.langchain4j.workflow.prompt.GenerateAnswerPrompt;
+import io.github.czelabueno.jai.workflow.langchain4j.workflow.prompt.GenerateAnswerPrompt;
 
 import java.util.ArrayList;
 import java.util.List;

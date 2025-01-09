@@ -131,7 +131,7 @@ In **jAI Workflow**, the notion of state plays a pivotal role. Every execution o
 The simplest way to use jAI Workflow in your project is with the [LangChain4j](https://docs.langchain4j.dev) integration because enables you to define custom workflows using all the features that LangChain4j offers. This integration could provide a comprehensive toolset for building advanced AI applications:
 ```xml
 <dependency>
-  <groupId>com.github.czelabueno</groupId>
+  <groupId>io.github.czelabueno</groupId>
   <artifactId>jai-workflow-langchain4j</artifactId>
   <version>0.2.0</version> <!--Change to the latest version-->
 </dependency>
@@ -140,7 +140,7 @@ The simplest way to use jAI Workflow in your project is with the [LangChain4j](h
 If you would want to use jAI workflow without LangChain4j or with other framework, add the following dependency to your `pom.xml` file:
 ```xml
 <dependency>
-  <groupId>com.github.czelabueno</groupId>
+  <groupId>io.github.czelabueno</groupId>
   <artifactId>jai-workflow-core</artifactId>
   <version>0.2.0</version> <!--Change to the latest version-->
 </dependency>

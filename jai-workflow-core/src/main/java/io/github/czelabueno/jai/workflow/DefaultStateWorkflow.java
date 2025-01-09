@@ -1,11 +1,11 @@
-package com.github.czelabueno.jai.workflow;
+package io.github.czelabueno.jai.workflow;
 
-import com.github.czelabueno.jai.workflow.node.Conditional;
-import com.github.czelabueno.jai.workflow.node.Node;
-import com.github.czelabueno.jai.workflow.transition.Transition;
-import com.github.czelabueno.jai.workflow.graph.GraphImageGenerator;
-import com.github.czelabueno.jai.workflow.graph.graphviz.GraphvizImageGenerator;
-import com.github.czelabueno.jai.workflow.transition.TransitionState;
+import io.github.czelabueno.jai.workflow.node.Conditional;
+import io.github.czelabueno.jai.workflow.node.Node;
+import io.github.czelabueno.jai.workflow.transition.Transition;
+import io.github.czelabueno.jai.workflow.graph.GraphImageGenerator;
+import io.github.czelabueno.jai.workflow.graph.graphviz.GraphvizImageGenerator;
+import io.github.czelabueno.jai.workflow.transition.TransitionState;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Singular;

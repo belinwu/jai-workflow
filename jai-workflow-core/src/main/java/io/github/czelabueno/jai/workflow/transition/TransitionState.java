@@ -1,4 +1,4 @@
-package com.github.czelabueno.jai.workflow.transition;
+package io.github.czelabueno.jai.workflow.transition;
 
 /**
  * Marker interface representing a state in a workflow transition.

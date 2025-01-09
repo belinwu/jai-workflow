@@ -1,8 +1,8 @@
-import com.github.czelabueno.jai.workflow.StateWorkflow;
-import com.github.czelabueno.jai.workflow.WorkflowStateName;
-import com.github.czelabueno.jai.workflow.langchain4j.internal.DefaultJAiWorkflow;
-import com.github.czelabueno.jai.workflow.langchain4j.node.StreamingNode;
-import com.github.czelabueno.jai.workflow.node.Node;
+import io.github.czelabueno.jai.workflow.StateWorkflow;
+import io.github.czelabueno.jai.workflow.WorkflowStateName;
+import io.github.czelabueno.jai.workflow.langchain4j.internal.DefaultJAiWorkflow;
+import io.github.czelabueno.jai.workflow.langchain4j.node.StreamingNode;
+import io.github.czelabueno.jai.workflow.node.Node;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
 import dev.langchain4j.model.mistralai.MistralAiChatModel;
@@ -12,14 +12,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
-import com.github.czelabueno.jai.workflow.langchain4j.workflow.NodeFunctionsMock;
-import com.github.czelabueno.jai.workflow.langchain4j.workflow.StatefulBeanMock;
+import io.github.czelabueno.jai.workflow.langchain4j.workflow.NodeFunctionsMock;
+import io.github.czelabueno.jai.workflow.langchain4j.workflow.StatefulBeanMock;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static com.github.czelabueno.jai.workflow.langchain4j.workflow.NodeFunctionsMock.generate;
-import static com.github.czelabueno.jai.workflow.langchain4j.workflow.NodeFunctionsMock.retrieve;
+import static io.github.czelabueno.jai.workflow.langchain4j.workflow.NodeFunctionsMock.generate;
+import static io.github.czelabueno.jai.workflow.langchain4j.workflow.NodeFunctionsMock.retrieve;
 import static java.util.stream.Collectors.joining;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;

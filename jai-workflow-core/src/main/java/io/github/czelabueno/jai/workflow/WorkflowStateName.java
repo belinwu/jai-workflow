@@ -1,6 +1,6 @@
-package com.github.czelabueno.jai.workflow;
+package io.github.czelabueno.jai.workflow;
 
-import com.github.czelabueno.jai.workflow.transition.TransitionState;
+import io.github.czelabueno.jai.workflow.transition.TransitionState;
 
 /**
  * Enum representing the possible states in a workflow.

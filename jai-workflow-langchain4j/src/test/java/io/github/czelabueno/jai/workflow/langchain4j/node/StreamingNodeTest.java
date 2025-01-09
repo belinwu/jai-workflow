@@ -1,7 +1,6 @@
-package com.github.czelabueno.jai.workflow.langchain4j.node;
+package io.github.czelabueno.jai.workflow.langchain4j.node;
 
-import com.github.czelabueno.jai.workflow.langchain4j.AbstractStatefulBean;
-import com.github.czelabueno.jai.workflow.langchain4j.node.StreamingNode;
+import io.github.czelabueno.jai.workflow.langchain4j.AbstractStatefulBean;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;

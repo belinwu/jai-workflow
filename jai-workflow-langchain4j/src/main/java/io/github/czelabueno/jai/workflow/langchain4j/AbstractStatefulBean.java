@@ -1,4 +1,4 @@
-package com.github.czelabueno.jai.workflow.langchain4j;
+package io.github.czelabueno.jai.workflow.langchain4j;
 
 import lombok.Data;
 import reactor.core.publisher.Flux;

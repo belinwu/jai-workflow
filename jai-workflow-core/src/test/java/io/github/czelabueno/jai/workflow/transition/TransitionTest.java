@@ -1,11 +1,8 @@
-package com.github.czelabueno.jai.workflow.transition;
+package io.github.czelabueno.jai.workflow.transition;
 
-import com.github.czelabueno.jai.workflow.WorkflowStateName;
-import com.github.czelabueno.jai.workflow.node.Node;
+import io.github.czelabueno.jai.workflow.WorkflowStateName;
+import io.github.czelabueno.jai.workflow.node.Node;
 import org.junit.jupiter.api.Test;
-
-import java.util.Arrays;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
