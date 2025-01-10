@@ -10,6 +10,7 @@
 
     <artifactId>jai-workflow-langchain4j</artifactId>
     <name>JavAI Workflow :: LangChain4j</name>
+    <description>jAI Workflow + LangChain4j: Offers a comprehensive toolset for building agentic AI applications</description>
 
     <properties>
         <langchain4j.version>1.0.0-alpha1</langchain4j.version>
