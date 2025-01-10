@@ -1,6 +1,6 @@
 # JavAI Workflow 🦜🔂☕: Build programmatically custom agentic workflows, AI Agents, RAG systems for java
 [![Build Status](https://github.com/czelabueno/langchain4j-workflow/actions/workflows/ci.yaml/badge.svg)](https://github.com/czelabueno/langchain4j-workflow/actions/workflows/ci.yaml)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/dev.langchain4j/langchain4j-workflow/badge.svg)](https://maven-badges.herokuapp.com/maven-central/dev.langchain4j/langchain4j-workflow)
+[![Version](https://img.shields.io/maven-central/v/io.github.czelabueno/jai-workflow-parent?logo=apachemaven)](https://search.maven.org/#search|gav|1|g:"io.github.czelabueno"%20AND%20a:"ja-workflow")
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 An open-source Java library to build, package, integrate, orchestrate and monitor agentic AI systems for java developers 💡
