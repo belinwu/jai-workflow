@@ -1,0 +1,40 @@
+name: "\U0001F4D6 Documentation"
+description: Request for new documentation or improvements to existing documentation for jAI Workflow. Please provide as much detail as possible to help us understand your request.
+title: "[DOCS] "
+labels: ["documentation"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting improvements to the documentation for jAI Workflow!
+
+        Please use this template to provide a detailed description of the documentation request. For general questions or discussions, please use [GitHub Discussions](https://github.com/czelabueno/jai-workflow/discussions).
+
+  - type: input
+    id: title
+    attributes:
+      label: Documentation Title
+      description: A clear and concise title of the documentation request.
+      placeholder: "Documentation title"
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Explain why this documentation should be added or improved and how it would benefit users.
+      placeholder: "Motivation for the documentation request"
+
+  - type: textarea
+    attributes:
+      label: "Issue with current documentation:"
+      description: |
+        Please make sure to leave a reference to the document/code you're
+        referring to.
+
+  - type: textarea
+    attributes:
+      label: "Idea or request for content:"
+      description: |
+        Please describe as clearly as possible what topics you think are missing
+        from the current documentation.

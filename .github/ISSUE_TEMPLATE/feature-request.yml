@@ -1,0 +1,47 @@
+name: "\U0001F680 Feature Request"
+description: Suggest a new feature or enhancement for jAI Workflow. Please provide as much detail as possible to help us understand your request.
+title: "[FEATURE] "
+labels: ["enhancement"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature for jAI Workflow!
+
+        Please use this template to provide a detailed description of the feature you would like to see. For general questions or discussions, please use [GitHub Discussions](https://github.com/czelabueno/jai-workflow/discussions).
+
+  - type: input
+    id: title
+    attributes:
+      label: Feature Title
+      description: A clear and concise title of the feature request.
+      placeholder: "Feature title"
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of what the feature is and why it would be useful.
+      placeholder: "Description of the feature"
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Explain why this feature should be added and how it would benefit users.
+      placeholder: "Motivation for the feature"
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+      description: Describe any alternative solutions or features you've considered.
+      placeholder: "Alternative solutions or features"
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context or screenshots about the feature request here.
+      placeholder: "Additional context"
