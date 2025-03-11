@@ -4,25 +4,32 @@ import io.github.czelabueno.jai.workflow.transition.TransitionState;
 import lombok.Getter;
 import lombok.NonNull;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
+import static java.util.Collections.emptyList;
+
 /**
- * Represents a node in a workflow that executes a function with a given input and produces an output.
+ * Represents a Node in a workflow that executes a function with a given input and produces an output.
+ * <p>
+ * A Node represents a single unit of work within the workflow. It encapsulates a specific function or task that processes the stateful bean and updates it.
+ * </p>
  * <p>
  * This class implements the {@link TransitionState} interface.
- *
- * @param <T> the type of the input to the function. Normally a stateful bean POJO defined by the user.
- * @param <R> the type of the output from the function. Normally a stateful bean POJO defined by the user.
+ * </p>
+ * @param <T> the type of the input to the function. Usually a stateful bean POJO defined by the user.
+ * @param <R> the type of the output from the function. Usually a stateful bean POJO defined by the user.
  */
 public class Node<T, R> implements TransitionState {
 
     @Getter
     private final String name;
     private final Function<T, R> function;
-    @Getter
+    private List<String> labels;
     private T functionInput;
-    @Getter
     private R functionOutput;
 
     /**
@@ -42,6 +49,48 @@ public class Node<T, R> implements TransitionState {
     }
 
     /**
+     * Adds the specified labels to the Node.
+     *
+     * @param labels the labels to add
+     */
+    public void setLabels(String... labels) {
+        if (this.labels == null) {
+            this.labels = new ArrayList<>(Arrays.asList(labels));
+        } else {
+            this.labels.addAll(Arrays.asList(labels));
+        }
+    }
+
+    /**
+     * Gets the label for the Node.
+     *
+     * @param label the label to get
+     * @return the label for the Node
+     */
+    public String getLabel(String label) {
+        if (labels == null) {
+            return null;
+        }
+        return labels.stream()
+                .filter(l -> l.equals(label))
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * Checks if the Node has the specified label.
+     *
+     * @param label the label to check
+     * @return true if the Node has the label, false otherwise
+     */
+    public boolean hasLabel(String label) {
+        if (labels == null) {
+            return false;
+        }
+        return labels.contains(label);
+    }
+
+    /**
      * Executes the function with the given input and stores the input and output.
      *
      * @param input the input to the function
@@ -52,8 +101,8 @@ public class Node<T, R> implements TransitionState {
         if (input == null) {
             throw new IllegalArgumentException("Function input cannot be null");
         }
-        R output = function.apply(input);
         functionInput = input;
+        R output = function.apply(input);
         functionOutput = output;
         return output;
     }
@@ -95,5 +144,35 @@ public class Node<T, R> implements TransitionState {
                 "name='" + name + '\'' +
                 ", function=" + function +
                 '}';
+    }
+
+    /**
+     * Returns the name formatted for the graph.
+     *
+     * @return the name formatted for the graph.
+     */
+    @Override
+    public String graphName() {
+        return name.toLowerCase();
+    }
+
+    /**
+     * Returns the labels for a Node.
+     *
+     * @return the labels for a Node.
+     */
+    @Override
+    public List<String> labels() {
+        return labels != null ? labels : emptyList();
+    }
+
+    @Override
+    public Object input() {
+        return functionInput;
+    }
+
+    @Override
+    public Object output() {
+        return functionOutput;
     }
 }

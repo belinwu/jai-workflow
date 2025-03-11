@@ -9,7 +9,7 @@ import lombok.NonNull;
  * The states can be instances of {@link Node} or {@link WorkflowStateName}.
  *
  */
-public record Transition(TransitionState from, TransitionState to) {
+public record Transition (TransitionState from, TransitionState to) {
 
     /**
      * Constructs a Transition with the specified from and to states.
@@ -46,6 +46,24 @@ public record Transition(TransitionState from, TransitionState to) {
         return new Transition(from, to);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Transition that = (Transition) o;
+
+        if (!from.equals(that.from)) return false;
+        return to.equals(that.to);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = from.hashCode();
+        result = 31 * result + to.hashCode();
+        return result;
+    }
+
     /**
      * Returns a string representation of the transition.
      *
@@ -54,20 +72,8 @@ public record Transition(TransitionState from, TransitionState to) {
     @Override
     public String toString() {
         String transition = "";
-        if (from instanceof Node) {
-            transition = ((Node) from).getName() + " -> ";
-        } else if (from instanceof WorkflowStateName) {
-            transition = ((WorkflowStateName) from).toString() + " -> ";
-        } else {
-            transition = from.toString() + " -> ";
-        }
-        if (to instanceof Node) {
-            transition = transition + ((Node) to).getName();
-        } else if (to instanceof WorkflowStateName) {
-            transition = transition + ((WorkflowStateName) to).toString();
-        } else {
-            transition = transition + to.toString();
-        }
+        if (from != null) transition = from.graphName() + " -> ";
+        if (to != null) transition = transition + to.graphName();
         return transition;
     }
 }

@@ -116,7 +116,7 @@ public class StreamingNode<T extends AbstractStatefulBean> extends Node<T, Flux<
     private static <T extends AbstractStatefulBean> Flux<String> streamingFunction(
             T statefulBean,
             List<ChatMessage> messages,
-            Function<T, ChatMessage> doUserMessage,
+            Function<T, ChatMessage> doUserMessage, //TODO: Function could return a list of ChatMessage
             StreamingChatLanguageModel streamingChatLanguageModel) {
         Sinks.Many<String> sink = Sinks.many().unicast().onBackpressureBuffer();
         CompletableFuture<AiMessage> futureResponse = new CompletableFuture<>();

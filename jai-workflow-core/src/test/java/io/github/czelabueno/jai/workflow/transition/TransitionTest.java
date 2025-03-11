@@ -9,6 +9,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 class TransitionTest {
 
+    // validated
     @Test
     void should_build_transition_using_from() {
         Transition transition = Transition.from(
@@ -47,7 +48,7 @@ class TransitionTest {
         assertThat(transition.from()).isEqualTo(from);
         assertThat(transition.to()).isEqualTo(to);
 
-        assertThat(transition).hasToString("node1 -> END");
+        assertThat(transition).hasToString("node1 -> _end_");
     }
     // Transition WorkflowState to Node
     @Test
@@ -61,7 +62,7 @@ class TransitionTest {
         assertThat(transition.from()).isEqualTo(from);
         assertThat(transition.to()).isEqualTo(to);
 
-        assertThat(transition).hasToString("START -> node2");
+        assertThat(transition).hasToString("_start_ -> node2");
     }
 
     @Test
