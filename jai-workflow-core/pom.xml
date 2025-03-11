@@ -26,6 +26,11 @@
         </dependency>
 
         <dependency>
+            <groupId>guru.nidi</groupId>
+            <artifactId>graphviz-rough</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.graalvm.js</groupId>
             <artifactId>js</artifactId>
             <scope>runtime</scope>

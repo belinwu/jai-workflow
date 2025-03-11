@@ -89,6 +89,12 @@
       </dependency>
 
       <dependency>
+        <groupId>guru.nidi</groupId>
+        <artifactId>graphviz-rough</artifactId>
+        <version>${graphviz-java.version}</version>
+      </dependency>
+
+      <dependency>
         <groupId>org.graalvm.js</groupId>
         <artifactId>js</artifactId>
         <version>${graal.js.version}</version>
