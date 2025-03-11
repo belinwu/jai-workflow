@@ -1,5 +1,4 @@
-import io.github.czelabueno.jai.workflow.StateWorkflow;
-import io.github.czelabueno.jai.workflow.WorkflowStateName;
+import io.github.czelabueno.jai.workflow.langchain4j.JAiWorkflow;
 import io.github.czelabueno.jai.workflow.langchain4j.internal.DefaultJAiWorkflow;
 import io.github.czelabueno.jai.workflow.langchain4j.node.StreamingNode;
 import io.github.czelabueno.jai.workflow.node.Node;
@@ -8,6 +7,8 @@ import dev.langchain4j.model.chat.StreamingChatLanguageModel;
 import dev.langchain4j.model.mistralai.MistralAiChatModel;
 import dev.langchain4j.model.mistralai.MistralAiChatModelName;
 import dev.langchain4j.model.mistralai.MistralAiStreamingChatModel;
+import io.github.czelabueno.jai.workflow.transition.Transition;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
@@ -15,9 +16,14 @@ import reactor.test.StepVerifier;
 import io.github.czelabueno.jai.workflow.langchain4j.workflow.NodeFunctionsMock;
 import io.github.czelabueno.jai.workflow.langchain4j.workflow.StatefulBeanMock;
 
+import java.awt.image.BufferedImage;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
+import static io.github.czelabueno.jai.workflow.WorkflowStateName.END;
 import static io.github.czelabueno.jai.workflow.langchain4j.workflow.NodeFunctionsMock.generate;
 import static io.github.czelabueno.jai.workflow.langchain4j.workflow.NodeFunctionsMock.retrieve;
 import static java.util.stream.Collectors.joining;
@@ -57,8 +63,8 @@ class JAiWorkflowIT {
             .temperature(0.0)
             .build();
 
-    DefaultJAiWorkflow jAiWorkflow;
-    DefaultJAiWorkflow jAiWorkflowStreaming;
+    JAiWorkflow jAiWorkflow;
+    JAiWorkflow jAiWorkflowStreaming;
 
     @BeforeEach()
     void setUp() {
@@ -75,20 +81,27 @@ class JAiWorkflowIT {
                 streamingModel);
 
         // Build workflows of the synchronous and streaming ways
-        jAiWorkflow = buildWorkflow(statefulBean, false, retrieveNode, gradeDocumentsNode, generateNode);
-        jAiWorkflowStreaming = buildWorkflow(statefulBean, true, retrieveNode, gradeDocumentsNode, generateStreamingNode);
+        jAiWorkflow = new DefaultJAiWorkflow<StatefulBeanMock>(
+                statefulBean,
+                Arrays.asList(
+                        Transition.from(retrieveNode, gradeDocumentsNode),
+                        Transition.from(gradeDocumentsNode, generateNode),
+                        Transition.from(generateNode, END)
+                ),
+                retrieveNode,
+                false
+        );
         // Define your workflow transitions using edges and the entry point of the workflow
-        StateWorkflow workflow = jAiWorkflow.workflow();
-        workflow.putEdge(retrieveNode, gradeDocumentsNode);
-        workflow.putEdge(gradeDocumentsNode, generateNode);
-        workflow.putEdge(generateNode, WorkflowStateName.END);
-        workflow.startNode(retrieveNode);
-
-        StateWorkflow workflowStreaming = jAiWorkflowStreaming.workflow();
-        workflowStreaming.putEdge(retrieveNode, gradeDocumentsNode);
-        workflowStreaming.putEdge(gradeDocumentsNode, generateStreamingNode);
-        workflowStreaming.putEdge(generateStreamingNode, WorkflowStateName.END);
-        workflowStreaming.startNode(retrieveNode);
+        jAiWorkflowStreaming = new DefaultJAiWorkflow<StatefulBeanMock>(
+                statefulBean,
+                Arrays.asList(
+                        Transition.from(retrieveNode, gradeDocumentsNode),
+                        Transition.from(gradeDocumentsNode, generateStreamingNode),
+                        Transition.from(generateStreamingNode, END)
+                ),
+                retrieveNode,
+                true
+        );
     }
 
     @Test
@@ -98,9 +111,13 @@ class JAiWorkflowIT {
 
         // when
         String answer = jAiWorkflow.answer(question);
+        BufferedImage image = jAiWorkflow.getWorkflowImage();
 
         // then
         assertThat(answer).containsIgnoringWhitespaces("brain of an autonomous agent system");
+        assertThat(image).isNotNull();
+        assertThat(image.getWidth()).isGreaterThan(0);
+        assertThat(image.getHeight()).isGreaterThan(0);
     }
 
     @Test
@@ -114,6 +131,7 @@ class JAiWorkflowIT {
                 .withMessage("The last node of the workflow must be a StreamingNode to run in stream mode");
     }
 
+    @SneakyThrows
     @Test
     void should_answer_stream_question() {
         // given
@@ -122,6 +140,9 @@ class JAiWorkflowIT {
 
         // when
         Flux<String> tokens = jAiWorkflowStreaming.answerStream(question);
+        String strPath = "images/corrective-rag-workflow.svg";
+        Path path = Paths.get(strPath);
+        jAiWorkflowStreaming.getWorkflowImage(path);
 
         // then
         StepVerifier.create(tokens)
@@ -132,17 +153,6 @@ class JAiWorkflowIT {
         String answer = tokens.collectList().block().stream().collect(joining());
         assertThat(expectedTokens)
                 .anySatisfy(token -> assertThat(answer).containsIgnoringWhitespaces(token));
-    }
-
-    private DefaultJAiWorkflow<StatefulBeanMock> buildWorkflow(StatefulBeanMock statefulBean, Boolean runStream, List<Node<StatefulBeanMock, ?>> nodes) {
-        return DefaultJAiWorkflow.<StatefulBeanMock>builder()
-                .statefulBean(statefulBean)
-                .runStream(runStream)
-                .nodes(nodes)
-                .build();
-    }
-
-    private DefaultJAiWorkflow<StatefulBeanMock> buildWorkflow(StatefulBeanMock statefulBean, Boolean runStream, Node<StatefulBeanMock, ?>... nodes) {
-        return buildWorkflow(statefulBean, runStream, Arrays.asList(nodes));
+        assertThat(Files.exists(path)).isTrue();
     }
 }
