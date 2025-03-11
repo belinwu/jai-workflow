@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class NodeTest {
 
+    // validated
     @Test
     void test_valid_constructor() {
         Node node = Node.from("node1", (String s) -> s + "1");
@@ -38,7 +39,7 @@ class NodeTest {
         Node node = Node.from("node1", (String s) -> s + "1");
         assertThat(node.getName()).isEqualTo("node1");
         assertThat(node.execute("test")).isEqualTo("test1");
-        assertThat(node.getFunctionInput()).isEqualTo("test");
+        assertThat(node.input()).isEqualTo("test");
     }
 
     @Test
@@ -49,8 +50,8 @@ class NodeTest {
         };
         Node node = Node.from("node1", sumToString);
         assertThat(node.execute(1)).isEqualTo("2");
-        assertThat(node.getFunctionInput()).isEqualTo(1);
-        assertThat(node.getFunctionOutput()).isEqualTo("2");
+        assertThat(node.input()).isEqualTo(1);
+        assertThat(node.output()).isEqualTo("2");
     }
 
     @Test
@@ -58,6 +59,53 @@ class NodeTest {
         Node node = Node.from("node1", (String s) -> s + "1");
         IllegalArgumentException ilegal = assertThrows(IllegalArgumentException.class, () -> node.execute(null));
         assertThat(ilegal.getMessage()).isEqualTo("Function input cannot be null");
+    }
+
+    @Test
+    void test_node_get_name() {
+        Node node = Node.from("node1", (String s) -> s + "1");
+        assertThat(node.getName()).isEqualTo("node1");
+    }
+
+    @Test
+    void test_node_get_graph_name() {
+        Node node = Node.from("NODE1", (String s) -> s + "1");
+        assertThat(node.graphName()).isEqualTo("node1"); // graph name is lower case
+    }
+
+    @Test
+    void test_node_has_label() {
+        Node node = Node.from("node1", (String s) -> s + "1");
+        assertThat(node.hasLabel("label")).isFalse();
+
+        node.setLabels("label");
+        assertThat(node.hasLabel("label")).isTrue();
+        assertThat(node.getLabel("label")).isEqualTo("label");
+    }
+
+    @Test
+    void test_node_function_input_and_output_values() {
+        Node<String, String> node = Node.from("node1", s -> s + "1");
+        node.execute("test");
+        assertThat(node.input()).isEqualTo("test");
+        assertThat(node.output()).isEqualTo("test1");
+    }
+
+    @Test
+    void test_node_function_input_and_output_types_and_values() {
+        Function<Integer, String> sumToString = num -> {
+            num += 1;
+            return num.toString();
+        };
+        Node<Integer, String> node = Node.from("node1", sumToString);
+        node.execute(1);
+
+        // Check input type and value
+        assertThat(node.input()).isInstanceOf(Integer.class);
+        assertThat(node.input()).isEqualTo(1);
+        // Check output type and value
+        assertThat(node.output()).isInstanceOf(String.class);
+        assertThat(node.output()).isEqualTo("2");
     }
 
     @Test

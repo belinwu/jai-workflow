@@ -6,7 +6,7 @@
 
   <groupId>io.github.czelabueno</groupId>
   <artifactId>jai-workflow-parent</artifactId>
-  <version>0.2.0-SNAPSHOT</version>
+  <version>0.3.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>JavAI Workflow</name>
@@ -85,6 +85,12 @@
       <dependency>
         <groupId>guru.nidi</groupId>
         <artifactId>graphviz-java</artifactId>
+        <version>${graphviz-java.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>guru.nidi</groupId>
+        <artifactId>graphviz-rough</artifactId>
         <version>${graphviz-java.version}</version>
       </dependency>
 

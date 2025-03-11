@@ -8,11 +8,13 @@ import io.github.czelabueno.jai.workflow.langchain4j.node.StreamingNode;
 import io.github.czelabueno.jai.workflow.node.Node;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
+import io.github.czelabueno.jai.workflow.transition.Transition;
 import lombok.Builder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -26,117 +28,83 @@ import static dev.langchain4j.internal.ValidationUtils.ensureNotNull;
  *
  * @param <T> the type of the stateful bean, which extends AbstractStatefulBean
  */
-public class DefaultJAiWorkflow<T extends AbstractStatefulBean> implements JAiWorkflow {
+public class DefaultJAiWorkflow<T extends AbstractStatefulBean> extends DefaultStateWorkflow implements JAiWorkflow {
 
     private static final Logger log = LoggerFactory.getLogger(DefaultJAiWorkflow.class);
 
-    private final Boolean runStream;
-    private final Boolean generateWorkflowImage;
-    private final Path workflowImageOutputPath;
     private final T statefulBean;
-    private DefaultStateWorkflow<T> workflow;
+    private final Boolean runStreaming;
 
     /**
      * Constructs a new DefaultJAiWorkflow with the specified parameters.
      *
      * @param statefulBean the stateful bean holding the state of the workflow
-     * @param nodes the list of nodes to be processed in the workflow
-     * @param runStream flag indicating whether to run the workflow in stream mode
-     * @param generateWorkflowImage flag indicating whether to generate a workflow image
-     * @param workflowImageOutputPath the output path for the workflow image
+     * @param transitions the list of transition to be performed in the workflow
+     * @param runStreaming flag indicating whether to run the workflow in stream mode
      */
-    @Builder
     public DefaultJAiWorkflow(T statefulBean,
-                              List<Node<T,?>> nodes,
-                              Boolean runStream,
-                              Boolean generateWorkflowImage,
-                              Path workflowImageOutputPath) {
-        this.statefulBean = ensureNotNull(statefulBean, "%s cannot be null. jAI workflow cannot created without stateful bean definition", "statefulBean");
-        ensureNotNull(nodes, "%s cannot be null. jAI workflow cannot created without nodes definition", "nodes");
-        this.workflow = createWorkflow(statefulBean, nodes);
-        this.runStream = getOrDefault(runStream, false);
+                              List<Transition> transitions,
+                              Node<T, ?> startNode,
+                              Boolean runStreaming) {
+        super(DefaultStateWorkflow.<T>builder()
+                .statefulBean(statefulBean)
+                .addEdges(transitions.toArray(new Transition[0])));
+        this.statefulBean = statefulBean;
+        this.startNode(startNode);
+        this.runStreaming = getOrDefault(runStreaming, false);
         // check if workflowOutputPath is valid
-        this.generateWorkflowImage = workflowImageOutputPath != null || getOrDefault(generateWorkflowImage, false);
-        this.workflowImageOutputPath = workflowImageOutputPath;
-    }
-
-    /**
-     * Returns the current workflow.
-     *
-     * @return the current workflow
-     */
-    public StateWorkflow<T> workflow() {
-        return this.workflow;
-    }
-
-    /**
-     * Sets the workflow to the specified workflow.
-     *
-     * @param workflow the workflow to be set
-     */
-    public void setWorkflow(DefaultStateWorkflow<T> workflow) {
-        this.workflow = workflow;
+        // this.generateWorkflowImage = workflowImageOutputPath != null || getOrDefault(generateWorkflowImage, false);
+        // this.workflowImageOutputPath = workflowImageOutputPath;
     }
 
     @Override
     public AiMessage answer(UserMessage question) {
-        // Define a stateful bean
+        // Set User question to stateful bean
         this.statefulBean.setQuestion(question.singleText());
-        // Run workflow in stream mode or not
-        if (this.runStream) {
-            workflow().runStream(node -> log.debug("Node processed: " + node.getName()));
-        } else {
-            workflow().run();
-        }
-        generateWorkflowImageIfNeeded();
+        // Run workflow in synchronous mode
+        this.run();
         return AiMessage.from(this.statefulBean.getGeneration());
     }
 
     @Override
     public Flux<String> answerStream(UserMessage question) {
-        if (!runStream || !isLastNodeAStreamingNode(workflow())) {
+        if (!this.runStreaming || !isLastNodeAStreamingNode()) {
             throw new IllegalStateException("The last node of the workflow must be a StreamingNode to run in stream mode");
         }
-        // Define a stateful bean
+        // Set User question to stateful bean
         this.statefulBean.setQuestion(question.singleText());
-        // Run workflow in stream mode or not
-        if (this.runStream) {
-            workflow().runStream(node -> {
-                if (node instanceof StreamingNode) {
-                    log.debug("StreamingNode processed: " + node.getName());
+        // Run workflow in stream mode
+        if (this.runStreaming) {
+            this.runStream(node -> {
+                if (node instanceof StreamingNode streamingNode) {
+                    log.debug("StreamingNode processed: " + streamingNode.getName());
                 }
-                log.debug("Node processed: " + node.getName());
+                log.debug("Node processed: " + ((Node) node).getName());
             });
         }
-        generateWorkflowImageIfNeeded();
         return this.statefulBean.getGenerationStream();
     }
 
-    private DefaultStateWorkflow<T> createWorkflow(
-            T statefulBean,
-            List<Node<T, ?>> nodes) {
-        return DefaultStateWorkflow.<T>builder()
-                .statefulBean(statefulBean)
-                .addNodes(nodes)
-                .build();
-    }
-
-    private Boolean isLastNodeAStreamingNode(StateWorkflow<T> workflow) {
-        return workflow.getLastNode() instanceof StreamingNode;
-    }
-
-    private void generateWorkflowImageIfNeeded() {
-        // Generate workflow image if required
-        if (generateWorkflowImage) {
-            try {
-                if (workflowImageOutputPath != null) {
-                    workflow().generateWorkflowImage(workflowImageOutputPath.toAbsolutePath().toString());
-                } else {
-                    workflow().generateWorkflowImage();
-                }
-            } catch (IOException e) { // Generate image is not blocking the workflow execution
-                log.error("Error generating workflow image", e);
-            }
+    @Override
+    public JAiWorkflow getWorkflowImage(Path workflowImageOutputPath) throws IOException {
+        if (this.wasRun()) {
+            this.generateComputedWorkflowImage(workflowImageOutputPath.toAbsolutePath().toString());
+        } else {
+            this.generateWorkflowImage(workflowImageOutputPath.toAbsolutePath().toString());
         }
+        return this;
+    }
+
+    @Override
+    public BufferedImage getWorkflowImage() {
+        if (this.wasRun()) {
+            return this.generateComputedWorkflowBufferedImage();
+        } else {
+            return this.generateWorkflowBufferedImage();
+        }
+    }
+
+    private Boolean isLastNodeAStreamingNode() {
+        return this.getLastNode() instanceof StreamingNode;
     }
 }

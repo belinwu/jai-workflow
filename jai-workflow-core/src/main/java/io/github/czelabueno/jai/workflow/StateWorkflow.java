@@ -1,9 +1,12 @@
 package io.github.czelabueno.jai.workflow;
 
+import io.github.czelabueno.jai.workflow.graph.Format;
+import io.github.czelabueno.jai.workflow.graph.StyleAttribute;
 import io.github.czelabueno.jai.workflow.node.Conditional;
 import io.github.czelabueno.jai.workflow.node.Node;
-import io.github.czelabueno.jai.workflow.transition.Transition;
+import io.github.czelabueno.jai.workflow.transition.ComputedTransition;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.List;
 import java.util.function.Consumer;
@@ -51,7 +54,7 @@ public interface StateWorkflow<T> {
      *
      * @param startNode the starting node
      */
-    void startNode(Node<T,?> startNode);
+    StateWorkflow startNode(Node<T,?> startNode);
 
     /**
      * Returns the last node defined in the workflow.
@@ -80,7 +83,7 @@ public interface StateWorkflow<T> {
      *
      * @return the list of computed transitions
      */
-    List<Transition> getComputedTransitions();
+    List<ComputedTransition> getComputedTransitions();
 
     /**
      * Generates an image of the workflow and saves it to the specified output path.
@@ -88,7 +91,39 @@ public interface StateWorkflow<T> {
      * @param outputPath the path to save the workflow image
      * @throws IOException if an I/O error occurs
      */
-    void generateWorkflowImage(String outputPath) throws IOException;
+    void generateWorkflowImage(Format format, String outputPath, List<StyleAttribute> styleAttributes) throws IOException;
+
+    /**
+     * Generates an image of the workflow and saves it to the specified output path.
+     *
+     * @param outputPath the path to save the workflow image
+     * @param styleAttributes the style attributes to apply to the workflow image
+     * @throws IOException if an I/O error occurs
+     */
+    default void generateWorkflowImage(String outputPath, List<StyleAttribute> styleAttributes) throws IOException {
+        generateWorkflowImage(Format.SVG, outputPath, styleAttributes);
+    }
+
+    /**
+     * Generates an image of the workflow and saves it to the specified output path.
+     *
+     * @param format the format of the image
+     * @param outputPath the path to save the workflow image
+     * @throws IOException if an I/O error occurs
+     */
+    default void generateWorkflowImage(Format format, String outputPath) throws IOException {
+        generateWorkflowImage(format, outputPath, List.of());
+    }
+
+    /**
+     * Generates an image of the workflow and saves it to the specified output path.
+     *
+     * @param outputPath the path to save the workflow image
+     * @throws IOException if an I/O error occurs
+     */
+    default void generateWorkflowImage(String outputPath) throws IOException {
+        generateWorkflowImage(Format.SVG, outputPath);
+    }
 
     /**
      * Generates an image of the workflow and saves it to the default path "workflow-image.svg".
@@ -97,5 +132,140 @@ public interface StateWorkflow<T> {
      */
     default void generateWorkflowImage() throws IOException {
         generateWorkflowImage("workflow-image.svg");
+    }
+
+    /**
+     * Generates a BufferedImage representation of the workflow graph.
+     *
+     * @param format the format of the image
+     * @param styleAttributes the style attributes to apply to the workflow image
+     * @return the BufferedImage representation of the workflow graph
+     * @throws RuntimeException if an error occurs during image generation
+     */
+    BufferedImage generateWorkflowBufferedImage(Format format, List<StyleAttribute> styleAttributes) throws RuntimeException;
+
+    /**
+     * Generates a BufferedImage representation of the workflow graph with Format.SVG. by default.
+     *
+     * @param styleAttributes the style attributes to apply to the workflow image
+     * @return the BufferedImage representation of the workflow graph
+     * @throws RuntimeException if an error occurs during image generation
+     */
+    default BufferedImage generateWorkflowBufferedImage(List<StyleAttribute> styleAttributes) throws RuntimeException {
+        return generateWorkflowBufferedImage(Format.SVG, styleAttributes);
+    }
+
+    /**
+     * Generates a BufferedImage representation of the workflow graph with the specified format.
+     *
+     * @param format the format of the image
+     * @return the BufferedImage representation of the workflow graph
+     * @throws RuntimeException if an error occurs during image generation
+     */
+    default BufferedImage generateWorkflowBufferedImage(Format format) throws RuntimeException {
+        return generateWorkflowBufferedImage(format, List.of());
+    }
+
+    /**
+     * Generates a BufferedImage representation of the workflow graph with Format.SVG. by default.
+     *
+     * @return the BufferedImage representation of the workflow graph
+     * @throws RuntimeException if an error occurs during image generation
+     */
+    default BufferedImage generateWorkflowBufferedImage() throws RuntimeException {
+        return generateWorkflowBufferedImage(Format.SVG);
+    }
+
+    /**
+     * Generates an image of the computed workflow and saves it to the specified output path.
+     *
+     * @param format the format of the image
+     * @param outputPath the path to save the workflow image
+     * @param styleAttributes the style attributes to apply to the workflow image
+     * @throws IOException if an I/O error occurs
+     */
+    void generateComputedWorkflowImage(Format format, String outputPath, List<StyleAttribute> styleAttributes) throws IOException;
+
+    /**
+     * Generates an image of the computed workflow and saves it to the specified output path with Format.SVG by default.
+     *
+     * @param outputPath the path to save the workflow image
+     * @param styleAttributes the style attributes to apply to the workflow image
+     * @throws IOException if an I/O error occurs
+     */
+    default void generateComputedWorkflowImage(String outputPath, List<StyleAttribute> styleAttributes) throws IOException {
+        generateComputedWorkflowImage(Format.SVG, outputPath, styleAttributes);
+    }
+
+    /**
+     * Generates an image of the computed workflow and saves it to the specified output path.
+     *
+     * @param format the format of the image
+     * @param outputPath the path to save the workflow image
+     * @throws IOException if an I/O error occurs
+     */
+    default void generateComputedWorkflowImage(Format format, String outputPath) throws IOException {
+        generateComputedWorkflowImage(format, outputPath, List.of());
+    }
+
+    /**
+     * Generates an image of the computed workflow and saves it to the specified output path with Format.SVG by default.
+     *
+     * @param outputPath the path to save the workflow image
+     * @throws IOException if an I/O error occurs
+     */
+    default void generateComputedWorkflowImage(String outputPath) throws IOException {
+        generateComputedWorkflowImage(Format.SVG, outputPath);
+    }
+
+    /**
+     * Generates an image of the computed workflow and saves it to the default path "computed-workflow-image.svg" in SVG format.
+     *
+     * @throws IOException if an I/O error occurs
+     */
+    default void generateComputedWorkflowImage() throws IOException {
+        generateComputedWorkflowImage("computed-workflow-image.svg");
+    }
+
+    /**
+     * Generates a BufferedImage representation of the computed workflow graph.
+     *
+     * @param format the format of the image
+     * @param styleAttributes the style attributes to apply to the workflow image
+     * @return the BufferedImage representation of the computed workflow graph
+     * @throws IOException if an I/O error occurs
+     */
+    BufferedImage generateComputedWorkflowBufferedImage(Format format, List<StyleAttribute> styleAttributes) throws RuntimeException;
+
+    /**
+     * Generates a BufferedImage representation of the computed workflow graph with Format.SVG by default.
+     *
+     * @param styleAttributes the style attributes to apply to the workflow image
+     * @return the BufferedImage representation of the computed workflow graph
+     * @throws RuntimeException if an error occurs during image generation
+     */
+    default BufferedImage generateComputedWorkflowBufferedImage(List<StyleAttribute> styleAttributes) throws RuntimeException {
+        return generateComputedWorkflowBufferedImage(Format.SVG, styleAttributes);
+    }
+
+    /**
+     * Generates a BufferedImage representation of the computed workflow graph with the specified format.
+     *
+     * @param format the format of the image
+     * @return the BufferedImage representation of the computed workflow graph
+     * @throws RuntimeException if an error occurs during image generation
+     */
+    default BufferedImage generateComputedWorkflowBufferedImage(Format format) throws RuntimeException {
+        return generateComputedWorkflowBufferedImage(format, List.of());
+    }
+
+    /**
+     * Generates a BufferedImage representation of the computed workflow graph with Format.SVG by default.
+     *
+     * @return the BufferedImage representation of the computed workflow graph
+     * @throws RuntimeException if an error occurs during image generation
+     */
+    default BufferedImage generateComputedWorkflowBufferedImage() throws RuntimeException {
+        return generateComputedWorkflowBufferedImage(Format.SVG);
     }
 }

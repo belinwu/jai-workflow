@@ -2,7 +2,12 @@ package io.github.czelabueno.jai.workflow.langchain4j;
 
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
+import io.github.czelabueno.jai.workflow.StateWorkflow;
 import reactor.core.publisher.Flux;
+
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.nio.file.Path;
 
 import static dev.langchain4j.internal.ValidationUtils.ensureNotNull;
 
@@ -10,7 +15,7 @@ import static dev.langchain4j.internal.ValidationUtils.ensureNotNull;
  * The {@link JAiWorkflow} interface defines the entry-point contract for a workflow that processes user messages
  * and generates AI responses. It provides basic methods for synchronous and asynchronous (streaming) responses.
  */
-public interface JAiWorkflow {
+public interface JAiWorkflow extends StateWorkflow {
 
     /**
      * Generates an AI response to the given question.
@@ -53,4 +58,22 @@ public interface JAiWorkflow {
      * @return a Flux stream of the AI response tokens
      */
     Flux<String> answerStream(UserMessage question);
+
+    /**
+     * Generates a workflow image of the current workflow state.
+     * This method ensures that the workflow image output path is not null before processing.
+     *
+     * @param workflowImageOutputPath the path to save the workflow image
+     * @return the workflow image as a {@link JAiWorkflow}
+     * @throws IOException if an I/O error occurs
+     * @throws IllegalArgumentException if the workflow image output path is null
+     */
+    JAiWorkflow getWorkflowImage(Path workflowImageOutputPath) throws IOException;
+
+    /**
+     * Gets the workflow image as a {@link BufferedImage}.
+     *
+     * @return the workflow image as a {@link BufferedImage}
+     */
+    BufferedImage getWorkflowImage();
 }
