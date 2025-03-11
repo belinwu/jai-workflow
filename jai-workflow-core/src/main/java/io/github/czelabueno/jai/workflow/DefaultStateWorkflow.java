@@ -1,61 +1,193 @@
 package io.github.czelabueno.jai.workflow;
 
+import io.github.czelabueno.jai.workflow.graph.Format;
+import io.github.czelabueno.jai.workflow.graph.StyleAttribute;
 import io.github.czelabueno.jai.workflow.node.Conditional;
 import io.github.czelabueno.jai.workflow.node.Node;
+import io.github.czelabueno.jai.workflow.transition.ComputedTransition;
 import io.github.czelabueno.jai.workflow.transition.Transition;
 import io.github.czelabueno.jai.workflow.graph.GraphImageGenerator;
 import io.github.czelabueno.jai.workflow.graph.graphviz.GraphvizImageGenerator;
 import io.github.czelabueno.jai.workflow.transition.TransitionState;
-import lombok.Builder;
-import lombok.NonNull;
-import lombok.Singular;
+import lombok.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
+
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 
 public class DefaultStateWorkflow<T> implements StateWorkflow<T> {
 
     private static final Logger log = LoggerFactory.getLogger(DefaultStateWorkflow.class);
-    private final Map<Node<T,?>, List<TransitionState>> adjList;
+    private final Map<TransitionState, List<TransitionState>> adjList;
     private volatile Node<T,?> startNode;
     private final T statefulBean;
-    private final List<Transition> transitions;
-    private GraphImageGenerator graphImageGenerator;
+    private final List<Transition> transitions; // definition transitions
+    private final Map<TransitionState, CounterTransitionsPerState> transitionsPerState;
+    private final List<TransitionState> compiledStates;
+    private int executionOrder;
+    private final List<ComputedTransition> computedTransitions; // computed transitions after running
+    private final GraphImageGenerator graphImageGenerator;
 
-    @Builder
-    public DefaultStateWorkflow(@NonNull T statefulBean,
-                                @Singular List<Node<T,?>> addNodes,
-                                GraphImageGenerator graphImageGenerator) {
-        if (addNodes.isEmpty()) {
-            throw new IllegalArgumentException("At least one node must be added to the workflow");
+    protected DefaultStateWorkflow(Builder<T> builder) {
+        if (builder.statefulBean == null) {
+            throw new IllegalArgumentException("Stateful bean cannot be null");
+        }
+        if (builder.addEdges == null || builder.addEdges.isEmpty()) {
+            throw new IllegalArgumentException("At least one edged must be added to the workflow");
         }
 
-        this.statefulBean = statefulBean;
+        this.statefulBean = builder.statefulBean;
         this.adjList = new ConcurrentHashMap<>();
         this.transitions = Collections.synchronizedList(new ArrayList<>());
+        this.computedTransitions = Collections.synchronizedList(new ArrayList<>());
 
-        if (graphImageGenerator != null) {
-            this.graphImageGenerator = graphImageGenerator;
-        } else {
-            this.graphImageGenerator = GraphvizImageGenerator.<T>builder().build();
-        }
+        this.graphImageGenerator = builder.graphImageGenerator != null ? builder.graphImageGenerator : GraphvizImageGenerator.builder().build();
 
-        // Add nodes to adjList if they are not already present
-        for (Node<T,?> node : addNodes) {
-            this.adjList.putIfAbsent(node, Collections.synchronizedList(new ArrayList<>()));
-        }
+        // build transitions definition
+        this.transitionsPerState = new ConcurrentHashMap<>();
+        buildDefinitionTransitions(builder.addEdges, builder.addNodes);
+
+        // build validation
+        this.compiledStates = Collections.synchronizedList(new ArrayList<>());
+        compileValidation(WorkflowStateName.START);
     }
 
-    public void setGraphImageGenerator(GraphImageGenerator graphImageGenerator) {
-        this.graphImageGenerator = graphImageGenerator;
+    private void buildDefinitionTransitions(List<Transition> edges, List<Node<T, ?>> nodes) {
+        // Add edges to adjList
+        this.adjList.clear();
+        edges.forEach(transition -> {
+            this.adjList.putIfAbsent(transition.from(), Collections.synchronizedList(new ArrayList<>()));
+            this.adjList.putIfAbsent(transition.to(), Collections.synchronizedList(new ArrayList<>()));
+            if (transition.from() instanceof Conditional conditionalFrom) { // Add expected nodes to adjList if the 'from' node is a Conditional
+                this.adjList.get(conditionalFrom).addAll(conditionalFrom.getExpectedNodes());
+            } else if (transition.to() instanceof Conditional conditionalTo) { // Add expected nodes to adjList if the 'to' node is a Conditional
+                this.adjList.get(conditionalTo).addAll(conditionalTo.getExpectedNodes());
+                this.adjList.get(transition.from()).add(conditionalTo); // Add the Conditional node to the adjList
+            } else {
+                this.adjList.get(transition.from()).add(transition.to()); // Add the edge to the adjList
+            }
+        });
+
+        // Add nodes to adjList if they are not already present
+        nodes.forEach(node -> this.adjList.putIfAbsent(node, Collections.synchronizedList(new ArrayList<>())));
+
+        // Count the number of input and output transitions for each state
+        this.transitionsPerState.clear();
+        this.adjList.forEach((node, transitionStates) -> {
+            transitionStates.forEach(transition -> this.transitionsPerState
+                    .computeIfAbsent(transition, k -> new CounterTransitionsPerState(0, 0))
+                    .incrementInputTransitions()); // the existing or new CounterTransitionsPerState is updated with the incremented input transitions
+            this.transitionsPerState.computeIfAbsent(node, k -> new CounterTransitionsPerState(0, transitionStates.size()))
+                    .setOutputTransitions(transitionStates.size());
+        });
+
+
+        if (!this.transitionsPerState.containsKey(WorkflowStateName.START)) {
+            // Setting nodes without incoming transitions as first nodes
+            List<TransitionState> firstStates = this.transitionsPerState.entrySet().stream()
+                    .filter(counter -> counter.getValue().getInputTransitions() == 0)
+                    .map(Map.Entry::getKey)
+                    .collect(toList());
+
+            this.adjList.putIfAbsent(WorkflowStateName.START, firstStates);
+            this.transitionsPerState.putIfAbsent(WorkflowStateName.START, new CounterTransitionsPerState(0, firstStates.size()));
+            firstStates.stream().forEach(firstState -> transitionsPerState.get(firstState).incrementInputTransitions());
+
+        }
+        if (!this.transitionsPerState.containsKey(WorkflowStateName.END)) {
+            // Setting nodes without outgoing transitions as last nodes
+            List<TransitionState> lastStates = this.transitionsPerState.entrySet().stream()
+                    .filter(counter -> counter.getValue().getOutputTransitions() == 0)
+                    .map(Map.Entry::getKey)
+                    .collect(toList());
+
+            lastStates.stream().forEach(lastState -> this.adjList.computeIfAbsent(lastState, k -> Collections.synchronizedList(new ArrayList<>())).add(WorkflowStateName.END));
+            this.transitionsPerState.putIfAbsent(WorkflowStateName.END, new CounterTransitionsPerState(lastStates.size(), 0));
+            lastStates.stream().forEach(lastState -> this.transitionsPerState.get(lastState).incrementOutputTransitions());
+        }
+        // Add all built transitions from adjList
+        this.transitions.clear();
+        this.adjList.forEach((node, ts) -> ts.forEach(transitionStateTo -> this.transitions.add(Transition.from(node, transitionStateTo))));
+    }
+
+    private void compileValidation(TransitionState state) {
+        boolean isSplit = false;
+        if (this.transitionsPerState.get(state).getOutputTransitions() > 1 && !(state instanceof Conditional)) {
+            isSplit = true;
+        };
+        boolean isMerge = false;
+        boolean isParallel = false;
+
+        if (state instanceof Node) {
+            Node node = (Node) state;
+            isMerge = node.hasLabel("Merge");
+            isParallel = node.hasLabel("Parallel");
+            if (isParallel && isSplit) {
+                throw new IllegalArgumentException("A parallel node '" + node.graphName() + "' cannot be a split node in the same flow");
+            }
+            if (isMerge && isSplit) {
+                throw new IllegalArgumentException("A merge node '" + node.graphName() + "' cannot be a split node in the same flow");
+            }
+            if (isMerge && isParallel) {
+                throw new IllegalArgumentException("A merge node '" + node.graphName() + "' cannot be a parallel node in the same flow");
+            }
+            if (isMerge) {
+                int mergeInputTransitions = this.transitionsPerState.get(state).getInputTransitions(); // number of input transitions for merge node
+                this.compiledStates.stream()
+                        .filter(compiledState -> compiledState.hasLabel("Split"))
+                        .findAny()
+                        .ifPresent(existingSplitNode -> {
+                            int splitOutputTransitions = this.transitionsPerState.get(existingSplitNode).getOutputTransitions(); // number of output transitions for split node
+                            if (mergeInputTransitions != splitOutputTransitions) {
+                                throw new IllegalArgumentException("The merge node '" + node.graphName() + "' must have the same number of input transitions as the number of output transitions from the split node '" + existingSplitNode.graphName() + "'");
+                            }
+                        });
+            }
+            if (isSplit) node.setLabels("Split");
+        }
+        this.compiledStates.add(state); // state compiled and validated
+
+        List<TransitionState> nextStates = this.adjList.get(state);
+        for (TransitionState nextState : nextStates) {
+            if (!this.compiledStates.contains(nextState)) {
+                if (nextState instanceof Node) {
+                    Node<T, ?> targetNode = (Node<T, ?>) nextState;
+                    if (isSplit || isParallel) {
+                        targetNode.setLabels("Parallel");
+                    }
+                    if (this.transitionsPerState.get(targetNode).getInputTransitions() > 1 && this.transitions.stream()
+                                .filter(transition -> transition.to().equals(targetNode) && transition.from() instanceof Conditional)
+                                .findAny()
+                                .isEmpty()){ // 'from' should not be a Conditional node
+                        targetNode.labels().clear();
+                        targetNode.setLabels("Merge");
+                    }
+                }
+                if (isParallel){
+                    if (nextState instanceof WorkflowStateName) {
+                        throw new IllegalArgumentException("The state " + state.graphName() + " labeled as 'Parallel' cannot have a WorkflowStateName '" + nextState.graphName() +"' as an adjacent node");
+                    } else if (!nextState.hasLabel("Merge") && !nextState.hasLabel("Parallel")) {
+                        throw new IllegalArgumentException("A node labeled as 'Parallel' must have a node labeled as 'Merge' or 'Parallel' as an adjacent node");
+                    }
+                }
+                if (nextState == WorkflowStateName.END) {
+                    return;
+                }
+                compileValidation(nextState);
+            }
+        }
+        // Constraint 7
+        // This constraint requires runtime behavior, so it should be implemented in the `runNode` method.
     }
 
     @Override
@@ -65,160 +197,295 @@ public class DefaultStateWorkflow<T> implements StateWorkflow<T> {
 
     @Override
     public void putEdge(Node<T, ?> from, Node<T, ?> to) {
-        adjList.get(from).add(to);
+        putEdgeIfAbsent(from, to);
     }
 
     @Override
     public void putEdge(Node<T, ?> from, Conditional<T> conditional) {
-        adjList.get(from).add(conditional);
+        putEdgeIfAbsent(from, conditional);
     }
 
     @Override
     public void putEdge(Node<T, ?> from, WorkflowStateName state) {
-        adjList.get(from).add(state);
+        putEdgeIfAbsent(from, state);
+    }
+
+    private void putEdgeIfAbsent(TransitionState from, TransitionState to) {
+        // if the edge is already present, skip
+        if (this.transitions.stream().noneMatch(transition -> transition.from().equals(from) && transition.to().equals(to))) {
+            // 1. If the incoming 'from' transitionState already has an END state set, it will be removed to replace the new 'to' transitionState.
+            this.transitions.removeIf(transition -> transition.from().equals(from) && transition.to() == WorkflowStateName.END);
+            // 2. If the incoming 'to' transitionState is an explicit END state, the existing transition with END state will be removed and the incoming 'from' transitionState will be updated.
+            if (to == WorkflowStateName.END) {
+                this.transitions.removeIf(transition -> transition.to() == to);
+                this.transitions.removeIf(transition -> transition.from().equals(from));
+            }
+            this.transitions.add(Transition.from(from, to));
+            buildDefinitionTransitions(this.transitions, List.of()); // rebuild transitions, no nodes to add
+            this.compiledStates.clear();
+            compileValidation(WorkflowStateName.START); // recompile validation
+        }
     }
 
     @Override
-    public void startNode(Node<T,?> startNode){
+    public DefaultStateWorkflow startNode(Node<T,?> startNode){
         this.startNode = startNode;
+        return this;
     }
 
     @Override
     public Node<T, ?> getLastNode() {
-        if (adjList.isEmpty() || adjList == null)
+        if (this.adjList.isEmpty() || this.adjList == null)
             throw new IllegalStateException("No nodes added to the workflow");
 
-        return adjList.entrySet()
-                .stream()
+        return this.adjList.entrySet().stream()
                 .filter(entry -> entry.getValue().contains(WorkflowStateName.END))
-                .<Node<T, ?>>map(Map.Entry::getKey)
-                .findFirst()
-                .orElseGet(() -> adjList.keySet()
-                        .<Node<T, ?>>stream()
-                        .reduce((first, second) -> second)
-                        .orElseThrow());
+                .map(Map.Entry::getKey)
+                .filter(Node.class::isInstance)
+                .<Node<T, ?>>map(node -> (Node<T, ?>) node)
+                .reduce((first, second) -> second)
+                .orElseGet(() -> this.transitionsPerState.entrySet().stream()
+                                .filter(counter -> counter.getValue().getOutputTransitions() == 0)
+                                .map(Map.Entry::getKey)
+                                .filter(Node.class::isInstance)
+                                .reduce((first, second) -> second)
+                                .map(node -> (Node<T, ?>) node)
+                                .orElseThrow(() -> new IllegalStateException("No nodes added to the workflow")));
     }
 
     @Override
     public T run() {
-        transitions.clear(); // clean previous transitions
-        log.debug("STARTING workflow in normal mode..");
-        runNode(startNode);
-        return statefulBean;
-    }
-
-    private void runNode(Node<T,?> node) {
-        if (node == null) return;
-        log.debug("Running node name: " + node.getName() + "..");
-        if (node == startNode)
-            transitions.add(Transition.from(WorkflowStateName.START, node));
-        synchronized (statefulBean){
-            node.execute(statefulBean);
-        }
-        List<TransitionState> nextNodes;
-        synchronized (adjList) {
-            nextNodes = adjList.get(node);
-        }
-        for (TransitionState nextNode : nextNodes) {
-            if (nextNode instanceof WorkflowStateName) {
-                WorkflowStateName next = (WorkflowStateName) nextNode;
-                if (next == WorkflowStateName.END) {
-                    log.debug("Reached END state");
-                    transitions.add(Transition.from(node, WorkflowStateName.END));
-                    return;
-                }
-                transitions.add(Transition.from(node, next));
-            } else if (nextNode instanceof Node) {
-                Node<T,?> next = (Node<T,?>) nextNode;
-                transitions.add(Transition.from(node, next));
-                runNode(next);
-            } else if (nextNode instanceof Conditional) {
-                Node<T,?> conditionalNode = ((Conditional<T>) nextNode).evaluate(statefulBean);
-                transitions.add(Transition.from(node, conditionalNode));
-                runNode(conditionalNode);
-            }
-        }
+        return run(this.startNode, null);
     }
 
     @Override
     public T runStream(Consumer<Node<T, ?>> eventConsumer) {
-        transitions.clear(); // clean previous transitions
-        log.debug("STARTING workflow in stream mode..");
-        Queue<TransitionState> queue = new LinkedBlockingQueue<>();
-        queue.add(startNode);
-        transitions.add(Transition.from(WorkflowStateName.START, startNode));
-        while (!queue.isEmpty()) {
-            TransitionState current = queue.poll();
-            if (current instanceof Node) {
-                Node<T,?> currentNode = (Node<T,?>) current;
-                //eventConsumer.accept(currentNode);
-                synchronized (statefulBean){
-                    currentNode.execute(statefulBean);
-                }
-                eventConsumer.accept(currentNode);
-                List<TransitionState> nextNodes;
-                synchronized (adjList) {
-                    nextNodes = adjList.get(currentNode);
-                }
-                if (nextNodes != null) {
-                    for (TransitionState next : nextNodes) {
-                        if (next instanceof WorkflowStateName) {
-                            WorkflowStateName nextState = (WorkflowStateName) next;
-                            if (nextState == WorkflowStateName.END) {
-                                transitions.add(Transition.from(currentNode, WorkflowStateName.END));
-                                return statefulBean;
-                            }
-                            transitions.add(Transition.from(currentNode, next));
-                            queue.add(next);
-                        } else if (next instanceof Node) {
-                            transitions.add(Transition.from(currentNode, next));
-                            queue.add(next);
-                        } else if (next instanceof Conditional) {
-                            Node<T,?> conditionalNode = ((Conditional<T>) next).evaluate(statefulBean);
-                            transitions.add(Transition.from(currentNode, conditionalNode));
-                            queue.add(conditionalNode);
-                        }
-                    }
-                }
-            } else if (current == WorkflowStateName.END) {
-                log.debug("Reached END state");
-                return statefulBean;
-            }
+        return run(this.startNode, eventConsumer);
+    }
+
+    private T run(Node<T,?> node, Consumer<Node<T, ?>> eventConsumer) {
+        if (this.compiledStates == null || this.compiledStates.isEmpty()) {
+            throw new IllegalStateException("jai workflow cannot run without a built workflow");
         }
+        if (this.transitions == null || this.transitions.isEmpty()) {
+            throw new IllegalStateException("jai workflow cannot run without edges defined");
+        }
+        List<Node> startNodes = this.adjList.get(WorkflowStateName.START).stream()
+                .filter(transitionState -> transitionState instanceof Node)
+                .map(transitionState -> (Node) transitionState)
+                .toList();
+        node = determineStartNode(node, startNodes);
+
+        resetWorkflowState();
+        log.debug("STARTING workflow{}..", eventConsumer != null ? " in stream mode" : "");
+        runNode(node, eventConsumer);
+        log.debug("END workflow..");
         return statefulBean;
     }
 
+    private Node<T,?> determineStartNode(Node<T,?> node, List<Node> startNodes) {
+        if (node == null) {
+            if (startNodes.size() > 1) {
+                throw new IllegalStateException("Its not possible to determine the start node, multiple start nodes found: " +
+                        startNodes.stream().sorted(Comparator.comparing(startNodes::indexOf)).map(Node::getName).toList() +
+                        "\nPlease specify the start node using the .startNode(Node<T> node) method");
+            } else if (startNodes.size() == 1) {
+                node = startNodes.get(0);
+            }
+        }
+        return node;
+    }
+
+    private void resetWorkflowState() {
+        this.computedTransitions.clear(); // clean previous transitions
+        this.executionOrder=1;
+    }
+
+    private void runNode(Node<T,?> node, Consumer<Node<T, ?>> eventConsumer) {
+        log.debug("Running node name: " + node.getName() + "..");
+        synchronized (this.statefulBean){
+            node.execute(this.statefulBean);
+        }
+        if (eventConsumer != null) {
+            eventConsumer.accept(node);
+        }
+        List<TransitionState> nextNodes;
+        synchronized (this.adjList) {
+            nextNodes = this.adjList.get(node);
+        }
+        for (TransitionState nextNode : nextNodes) {
+            if (nextNode instanceof WorkflowStateName next) {
+                if (next == WorkflowStateName.END) {
+                    log.debug("Reached END state");
+                    computeTransition(this.executionOrder, node, next);
+                    this.executionOrder++;
+                    return;
+                }
+            } else if (nextNode instanceof Node next) {
+                computeTransition(this.executionOrder,node, next);
+                this.executionOrder++;
+                runNode(next, eventConsumer);
+            } else if (nextNode instanceof Conditional next) {
+                computeTransition(this.executionOrder, node, next);
+                this.executionOrder++;
+                Node<T,?> conditionalNode = next.evaluate(this.statefulBean);
+                if (conditionalNode == null) {
+                    throw new IllegalStateException("Conditional node returned null");
+                } else {
+                    computeTransition(this.executionOrder, next, conditionalNode);
+                    this.executionOrder++;
+                    runNode(conditionalNode, eventConsumer);
+                }
+            }
+        }
+    }
+
+    private void computeTransition(Integer order, TransitionState from, TransitionState to) {
+        this.transitions.stream()
+                .filter(transition -> transition.from().equals(from) && transition.to().equals(to))
+                .findAny()
+                .ifPresent(transition -> {
+                    this.computedTransitions.add(ComputedTransition.from(order, transition));
+                });
+    }
+
     @Override
-    public List<Transition> getComputedTransitions() {
-        return new ArrayList<>(transitions);
+    public List<ComputedTransition> getComputedTransitions() {
+        if (!wasRun()) {
+            throw new RuntimeException("Workflow has not been run yet. No transitions computed");
+        }
+        return this.computedTransitions.stream()
+                .sorted(Comparator.comparing(ComputedTransition::getOrder))
+                .collect(toUnmodifiableList());
+    }
+
+    public Boolean wasRun() {
+        return !this.computedTransitions.isEmpty();
+    }
+
+    @Override
+    public void generateComputedWorkflowImage(Format format, String outputPath, List<StyleAttribute> styleAttributes) throws IOException {
+        GraphvizImageGenerator graphImageGenerator = GraphvizImageGenerator.builder()
+                .computedTransitions(getComputedTransitions())
+                .build();
+        imageGenerator(graphImageGenerator, format, outputPath, styleAttributes);
+    }
+
+    @Override
+    public BufferedImage generateComputedWorkflowBufferedImage(Format format, List<StyleAttribute> styleAttributes) throws RuntimeException {
+        GraphvizImageGenerator graphImageGenerator = GraphvizImageGenerator.builder()
+                .computedTransitions(getComputedTransitions())
+                .build();
+        return imageGenerator(graphImageGenerator, format, styleAttributes);
     }
 
     public String prettyTransitions() {
         StringBuilder sb = new StringBuilder();
-        Object lastTo = null;
-        for (Transition transition : transitions) {
-            if (transition.from().equals(lastTo)) {
-                sb.append(" -> ").append(transition.to() instanceof Node ? ((Node) transition.to()).getName() : transition.to().toString());
-            } else {
-                if (sb.length() > 0) sb.append(" ");
-                sb.append(transition.from() instanceof Node ? ((Node)transition.from()).getName() : transition.from().toString()).append(" -> ").append(transition.to() instanceof Node ? ((Node) transition.to()).getName() : transition.to().toString());
-            }
-            lastTo = transition.to() instanceof Node ? (Node) transition.to() : transition.to();
+        for (ComputedTransition transition : getComputedTransitions()) {
+            sb.append("[")
+                    .append(transition.getTransition())
+                    .append(" {")
+                    .append("Order: "+ transition.getOrder()+", ")
+                    .append("ComputedAt: "+ transition.getComputedAt()+", ")
+                    .append("Payload: "+ transition.getPayload() + " }").append("]\n");
         }
         return sb.toString();
     }
 
+    // TODO: add a new parameter to specify the graph style: Layout DOT[normal, Sketchviz], Mermaid, etc
     @Override
-    public void generateWorkflowImage(String outputPath) throws IOException {
+    public void generateWorkflowImage(Format format, String outputPath, List<StyleAttribute> styleAttributes) throws IOException {
+        imageGenerator(this.graphImageGenerator, format, outputPath, styleAttributes);
+    }
+
+    @Override
+    public BufferedImage generateWorkflowBufferedImage(Format format, List<StyleAttribute> styleAttributes) throws RuntimeException {
+        return imageGenerator(this.graphImageGenerator, format, styleAttributes);
+    }
+
+    private BufferedImage imageGenerator(GraphImageGenerator graphImageGenerator, Format format, List<StyleAttribute> styleAttributes) throws RuntimeException {
+        List<Transition> transitions = this.transitions.stream().toList();
+        return graphImageGenerator.generateBufferedImage(
+                transitions,
+                format,
+                styleAttributes.toArray(new StyleAttribute[0]));
+    }
+
+    private void imageGenerator(GraphImageGenerator graphImageGenerator, Format format, String outputPath, List<StyleAttribute> styleAttributes) throws IOException {
+        List<Transition> transitions = this.transitions.stream().toList();
         try {
             Path path = Paths.get(outputPath);
-            this.graphImageGenerator.generateImage(this.transitions, path.toAbsolutePath().toString()); // Absolute path by default
+            graphImageGenerator.generateImage(
+                    transitions,
+                    path.toAbsolutePath().toString(), // Absolute path by default
+                    format,
+                    styleAttributes.toArray(new StyleAttribute[0]));
         } catch (InvalidPathException e) {
             log.warn("Invalid path: " + outputPath + " using default path");
-            this.graphImageGenerator.generateImage(this.transitions);
+            graphImageGenerator.generateImage(transitions, format);
         } catch (IOException e) {
             log.error("Error generating workflow image: " + e.getMessage());
             throw e;
+        }
+    }
+
+    /**
+     * Creates a new builder for the DefaultStateWorkflow class.
+     *
+     * @param <T> the type of the stateful bean
+     * @return a new builder for the DefaultStateWorkflow class
+     */
+    public static <T> Builder<T> builder() {
+        return new Builder<>();
+    }
+
+    public static class Builder<T> {
+        private T statefulBean;
+        private List<Transition> addEdges = new ArrayList<>();
+        private List<Node<T, ?>> addNodes = new ArrayList<>();
+        private GraphImageGenerator graphImageGenerator;
+
+        public Builder<T> statefulBean(T statefulBean) {
+            this.statefulBean = statefulBean;
+            return this;
+        }
+
+        public Builder<T> addEdges(Transition... edges) {
+            this.addEdges.addAll(Arrays.asList(edges));
+            return this;
+        }
+
+        public Builder<T> addNodes(Node<T, ?>... nodes) {
+            this.addNodes.addAll(Arrays.asList(nodes));
+            return this;
+        }
+
+        public Builder<T> graphImageGenerator(GraphImageGenerator graphImageGenerator) {
+            this.graphImageGenerator = graphImageGenerator;
+            return this;
+        }
+
+        public DefaultStateWorkflow<T> build(Node<T,?> startNode) {
+            return this.build().startNode(startNode);
+        }
+
+        public DefaultStateWorkflow<T> build() {
+            return new DefaultStateWorkflow<>(this);
+        }
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class CounterTransitionsPerState {
+        private int inputTransitions;
+        private int outputTransitions;
+
+        public void incrementInputTransitions() {
+            this.inputTransitions++;
+        }
+
+        public void incrementOutputTransitions() {
+            this.outputTransitions++;
         }
     }
 }
