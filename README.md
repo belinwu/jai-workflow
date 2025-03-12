@@ -25,23 +25,20 @@ var parserDocsNode = Node.from("Docs", obj -> transformDocsFromUrl(obj, uris));
 var retrieveNode = Node.from("Vector DB", obj -> extractRelevantDocumentsFromVectorDB(obj));
 var generateAnswerNode = StreamingNode.from("Generate",obj -> generateAnswer(obj), model);
 
-var jAiWorkflow = DefaultJAiWorkflow.<MyStatefulBean>builder()
-        .statefulBean(new MyStatefulBean())
-        .runStream(true)
-        .nodes(List.of(parserDocsNode, retrieveNode, generateAnswerNode))
-        .build();
-
-var stateWorkflow = jAiWorkflow.workflow();
-stateWorkflow.putEdge(parserDocsNode, retrieveNode);
-stateWorkflow.putEdge(retrieveNode,
-                      Conditional.eval(obj -> obj.isEnoughData() ? generateAnswerNode : parserDocsNode));
-        stateWorkflow.putEdge(generateAnswerNode, WorkflowStateName.END);
-stateWorkflow.startNode(retrieveNode);
+var jAiWorkflow = new DefaultJAiWorkflow<MyStatefulBean>(
+        new MyStatefulBean(),
+        List.of(Transition.from(parserDocsNode, retrieveNode),
+                Transition.from(retrieveNode, Conditional.eval("enoughData", 
+                        obj -> obj.isEnoughData() ? generateAnswerNode : parserDocsNode, 
+                        List.of(parserDocsNode, generateAnswerNode))),
+                Transition.from(generateAnswerNode, WorkflowStateName.END)),
+        retrieveNode, // Start node
+        true // Run in streaming mode
+);
 
 // Chat with your JAiWorkflow
 var question = "Summarizes the importance of building AI agentic systems";
 Flux<String> response = jAiWorkflow.answerStream(question);
-String answer = jAiWorkflow.answer(question);
 ```
 </details>
 
@@ -79,16 +76,24 @@ A `Workflow` is a directed graph of nodes, modules and edges that defines the se
 - **Scalable**: jAI Workflow can be deployed as any java project as standalone or distributed through containers in any cloud provider or kubernetes environment. Each module can run in a different JVM env or container for scalability in production environments.
 
 ## 🚀 Features
-### v.0.2.0 Features
+### v0.3.0 Features
+- **Workflow lifecycle**: Lifecycle is divided into 3 stages: _definition_, _build_, _run_. This feature allows you to define parameters to customize the workflow behavior for each stage, giving you the flexibility to redefine, rebuild, and rerun workflows at any time.
+- **Workflow patterns**: This version supports multiple workflow patterns, including `one-way`, `parallelization`, `routing`, `branching` and `conditional` inspired on [Modular RAG AI paper](https://arxiv.org/pdf/2407.21059v1). All of these patterns can be used at _definition_, _build_ and _run_ time, except for _parallelization_ which is not supported at _run_ time.
+- **Node types**: Adds new node types: `Split`, `Merge`, `Parallel`, `Conditional` with a list of expected nodes to be returned. These nodes allow you to define complex workflows patterns with multiple transitions between nodes.
+- **Debug workflow state**: Once workflow runs you can get a list of `ComputedTransition` with all details of the workflow execution. This feature allows you to debug the flow of your application and trace the inputs, outputs, execution order, datetime of each node.
+- **Workflow on-fly modification**: You can put edges `myworkflow.putEdge(..)`, add more nodes `myworkflow.addNode(..)` and override the start node `myworkflow.startNode(..)` at runtime. This feature allows you to modify the workflow behavior dynamically during execution.
+- **Workflow visualization**: You can generate the workflow image at definition time and at runtime. This feature allows you to visualize the flow computed of your app workflow. Both kinds of images can be generated in a given path `File` or as `BufferedImage` to be displayed in a java _notebook_. Also, you can use `StyleGraph.SKETCHY` as `StyleAttribute` to generate workflow images with [excalidraw](https://github.com/excalidraw/excalidraw) style. This style is supported in `Graphviz` implementation only.
+
+### v0.2.0 Features
 - **Graph-core**: The engine supports create `Nodes`, `Conditional Nodes`, `Edges`, and workflows as a graph. This feature allows you to define custom workflows with multiple `Transitions` between nodes such as one-way, round trip and recursive. 
 - **Run workflow**: jAI Workflow supports synchronized `workflow.run()` and streaming `worflow.runStream()` runs the outputs as they are produced by each node. This last feature allows for real-time processing and response in your application.
 - **Integration**: [LangChain4j](https://docs.langchain4j.dev/) integration, enabling you to define custom workflows using all the features that LangChain4j offers. This integration provides a comprehensive toolset for building advanced AI applications to integrate with multiple LLM providers and models.
 - **Visualization**: The engine supports the generation of workflow images. This feature allows you to visualize the flow computed of your app workflow. By Default it uses `Graphhviz` lib to generate the image, but you implement your own image generator on `GraphImageGenerator.java` interface.
 ### Q1 2025 Features
 - **Graph-Core**:
-  - Split Nodes
-  - Merge Nodes
-  - Parallel transitions
+  - [x] Split Nodes
+  - [x] Merge Nodes
+  - [x] Parallel transitions (except runtime)
   - Human-in-the-loop
 - **Modular (Group of nodes)**:
   - Module
@@ -133,7 +138,7 @@ The simplest way to use jAI Workflow in your project is with the [LangChain4j](h
 <dependency>
   <groupId>io.github.czelabueno</groupId>
   <artifactId>jai-workflow-langchain4j</artifactId>
-  <version>0.2.0</version> <!--Change to the latest version-->
+  <version>0.3.0</version> <!--Change to the latest version-->
 </dependency>
 ```
 
@@ -142,7 +147,7 @@ If you would want to use jAI workflow without LangChain4j or with other framewor
 <dependency>
   <groupId>io.github.czelabueno</groupId>
   <artifactId>jai-workflow-core</artifactId>
-  <version>0.2.0</version> <!--Change to the latest version-->
+  <version>0.3.0</version> <!--Change to the latest version-->
 </dependency>
 ```
 ### Example with langchain4j
@@ -208,40 +213,28 @@ public class Example {
             obj -> MyStatefulBeanFunctions.generateUserMessageUsingPrompt(obj),
             streamingModel);
 
-    // Create workflow
-    DefaultJAiWorkflow<MyStatefulBean> workflow = DefaultJAiWorkflow.<MyStatefulBean>builder()
-            .statefulBean(statefulBean)
-            .runStream(true)
-            .nodes(Arrays.asList(retrieveNode, webSearchNode, generateAnswerNode))
-            .build();
-
-    StateWorkflow stateWorkflow = workflow.workflow();
-    
-    // You can add more nodes after workflow build. E.g. node4
-    stateWorkflow.addNode(node4);
-
-    // Define edges
-    stateWorkflow.putEdge(retrieveNode, webSearchNode);
-    // Conditional edge
-    stateWorkflow.putEdge(webSearchNode, Conditional.eval(obj -> {
-      if (obj.webSearchResponse != null) {
-        return generateAnswerNode;
-      } else {
-        return retrieveNode;
-      }
-    }));
-    stateWorkflow.putEdge(generateAnswerNode, WorkflowStateName.END);
-
-    // Define which node to start
-    stateWorkflow.startNode(retrieveNode);
-
+    // Create workflow with the nodes and transitions.
+    DefaultJAiWorkflow<MyStatefulBean> workflow = new DefaultJAiWorkflow<MyStatefulBean>(
+            myStatefulBean,
+            List.of(Transition.from(retrieveNode, webSearchNode),
+                    Transition.from(webSearchNode, Conditional.eval("webSearchResponse",
+                            obj -> obj.webSearchResponse != null ? generateAnswerNode : retrieveNode,
+                            List.of(retrieveNode, generateAnswerNode))),
+                    Transition.from(generateAnswerNode, WorkflowStateName.END)),
+            retrieveNode, // Start node
+            true // Run in streaming mode
+    );
+    // Generate workflow image at definition time
+    workflow.getWorkflowImage("image/my-workflow.svg");
     // Start conversation with the workflow in streaming mode
     String question = "Summarizes the importance of building agents with LLMs";
     Flux<String> tokens = workflow.answerStream(question);
     tokens.subscribe(System.out::println);
-
+    
+    // Generate workflow image at runtime
+    workflow.getWorkflowImage("image/my-computed-workflow.svg");
     // Print all computed transitions
-    String transitions = stateWorkflow.prettyTransitions();
+    String transitions = workflow.prettyTransitions();
     System.out.println("Transitions: \n");
     System.out.println(transitions);
   }
@@ -312,14 +305,24 @@ tasks
 You can print all computed transitions:
 
 ```shell
-START -> node1 -> node2 -> node3 -> node2 -> node3 -> node4 -> END
+[_start_ -> retrieveNode {Order: 1, ComputedAt: 2025-03-11T01:08:05.839200, Payload: Node1: function proceed }]
+[retrieveNode -> webSearchNode {Order: 2, ComputedAt: 2025-03-11T01:08:05.839200, Payload: Node2: function proceed }]
+[webSearchNode -> webSearchResponse? {Order: 3, ComputedAt: 2025-03-11T01:08:05.839255, Payload: Node3: function proceed }]
+[webSearchResponse? -> generateAnswerNode {Order: 4, ComputedAt: 2025-03-11T01:08:05.839294, Payload: node4 }]
+[generateAnswerNode -> _end_ {Order: 5, ComputedAt: 2025-03-11T01:08:05.839353, Payload: Node4: function proceed }]
 ```
 You can generate a workflow image with all computed transitions:
 ```shell
 > image/
 > ├── my-workflow.svg
 ```
-![Workflow Image](jai-workflow-core/image/my-workflow.svg)
+![Workflow Image](jai-workflow-core/image/my-workflow-beauty.svg)
+
+```shell
+> image/
+> ├── my-computed-workflow.svg
+```
+![Workflow Image](jai-workflow-core/image/my-computed-workflow-beauty.svg)
 
 Check the full example in the [jai-workflow-langchain4j tests](https://github.com/czelabueno/jai-workflow/blob/main/jai-workflow-langchain4j/src/test/java/com/github/czelabueno/jai/workflow/langchain4j/JAiWorkflowIT.java)
 

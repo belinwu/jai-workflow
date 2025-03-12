@@ -1,0 +1,99 @@
+<svg width="158px" height="498px"
+ viewBox="0.00 0.00 157.65 497.99" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1.0 1.0) rotate(0.0) translate(4.0 493.99)">
+<title>workflow</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-493.99 153.65,-493.99 153.65,4 -4,4"/>
+<!-- _start_ -->
+<g id="node1" class="node">
+<title>_start_</title>
+<polygon fill="#fff0d4" stroke="orange" points="74.83,-489.99 15.72,-471.99 74.83,-453.99 133.93,-471.99 74.83,-489.99"/>
+<polyline fill="none" stroke="orange" points="27.2,-475.49 27.2,-468.5 "/>
+<polyline fill="none" stroke="orange" points="63.35,-457.49 86.31,-457.49 "/>
+<polyline fill="none" stroke="orange" points="122.45,-468.5 122.45,-475.49 "/>
+<polyline fill="none" stroke="orange" points="86.31,-486.5 63.35,-486.5 "/>
+<text text-anchor="middle" x="74.83" y="-467.79" font-family="arial" font-size="14.00">_start_</text>
+</g>
+<!-- node1 -->
+<g id="node2" class="node">
+<title>node1</title>
+<path fill="none" stroke="#b2dfee" d="M91.82,-417.99C91.82,-417.99 57.83,-417.99 57.83,-417.99 51.83,-417.99 45.83,-411.99 45.83,-405.99 45.83,-405.99 45.83,-393.99 45.83,-393.99 45.83,-387.99 51.83,-381.99 57.83,-381.99 57.83,-381.99 91.82,-381.99 91.82,-381.99 97.82,-381.99 103.82,-387.99 103.82,-393.99 103.82,-393.99 103.82,-405.99 103.82,-405.99 103.82,-411.99 97.82,-417.99 91.82,-417.99"/>
+<text text-anchor="middle" x="74.83" y="-395.79" font-family="arial" font-size="14.00">node1</text>
+</g>
+<!-- _start_&#45;&gt;node1 -->
+<g id="edge1" class="edge">
+<title>_start_&#45;&gt;node1</title>
+<path fill="none" stroke="darkgreen" d="M74.83,-453.69C74.83,-445.38 74.83,-435.27 74.83,-426.13"/>
+<polygon fill="darkgreen" stroke="darkgreen" points="77.63,-426.1 74.83,-418.1 72.03,-426.1 77.63,-426.1"/>
+</g>
+<!-- node2 -->
+<g id="node3" class="node">
+<title>node2</title>
+<path fill="none" stroke="#b2dfee" d="M91.82,-345.99C91.82,-345.99 57.83,-345.99 57.83,-345.99 51.83,-345.99 45.83,-339.99 45.83,-333.99 45.83,-333.99 45.83,-321.99 45.83,-321.99 45.83,-315.99 51.83,-309.99 57.83,-309.99 57.83,-309.99 91.82,-309.99 91.82,-309.99 97.82,-309.99 103.82,-315.99 103.82,-321.99 103.82,-321.99 103.82,-333.99 103.82,-333.99 103.82,-339.99 97.82,-345.99 91.82,-345.99"/>
+<text text-anchor="middle" x="74.83" y="-323.79" font-family="arial" font-size="14.00">node2</text>
+</g>
+<!-- node1&#45;&gt;node2 -->
+<g id="edge2" class="edge">
+<title>node1&#45;&gt;node2</title>
+<path fill="none" stroke="darkgreen" d="M74.83,-381.69C74.83,-373.38 74.83,-363.27 74.83,-354.13"/>
+<polygon fill="darkgreen" stroke="darkgreen" points="77.63,-354.1 74.83,-346.1 72.03,-354.1 77.63,-354.1"/>
+</g>
+<!-- node3 -->
+<g id="node6" class="node">
+<title>node3</title>
+<path fill="none" stroke="#b2dfee" d="M63.82,-273.99C63.82,-273.99 29.83,-273.99 29.83,-273.99 23.83,-273.99 17.83,-267.99 17.83,-261.99 17.83,-261.99 17.83,-249.99 17.83,-249.99 17.83,-243.99 23.83,-237.99 29.83,-237.99 29.83,-237.99 63.82,-237.99 63.82,-237.99 69.82,-237.99 75.82,-243.99 75.82,-249.99 75.82,-249.99 75.82,-261.99 75.82,-261.99 75.82,-267.99 69.82,-273.99 63.82,-273.99"/>
+<text text-anchor="middle" x="46.83" y="-251.79" font-family="arial" font-size="14.00">node3</text>
+</g>
+<!-- node2&#45;&gt;node3 -->
+<g id="edge3" class="edge">
+<title>node2&#45;&gt;node3</title>
+<path fill="none" stroke="darkgreen" d="M67.91,-309.69C64.51,-301.21 60.37,-290.86 56.66,-281.58"/>
+<polygon fill="darkgreen" stroke="darkgreen" points="59.24,-280.49 53.67,-274.1 54.04,-282.57 59.24,-280.49"/>
+</g>
+<!-- node4 -->
+<g id="node4" class="node">
+<title>node4</title>
+<path fill="none" stroke="#b2dfee" d="M91.82,-129.99C91.82,-129.99 57.83,-129.99 57.83,-129.99 51.83,-129.99 45.83,-123.99 45.83,-117.99 45.83,-117.99 45.83,-105.99 45.83,-105.99 45.83,-99.99 51.83,-93.99 57.83,-93.99 57.83,-93.99 91.82,-93.99 91.82,-93.99 97.82,-93.99 103.82,-99.99 103.82,-105.99 103.82,-105.99 103.82,-117.99 103.82,-117.99 103.82,-123.99 97.82,-129.99 91.82,-129.99"/>
+<text text-anchor="middle" x="74.83" y="-107.79" font-family="arial" font-size="14.00">node4</text>
+</g>
+<!-- _end_ -->
+<g id="node5" class="node">
+<title>_end_</title>
+<polygon fill="#d9ffd4" stroke="green" points="103.82,-57.99 45.83,-57.99 45.83,-0 103.82,-0 103.82,-57.99"/>
+<polyline fill="none" stroke="green" points="57.83,-57.99 45.83,-45.99 "/>
+<polyline fill="none" stroke="green" points="45.83,-12 57.83,-0 "/>
+<polyline fill="none" stroke="green" points="91.82,-0 103.82,-12 "/>
+<polyline fill="none" stroke="green" points="103.82,-45.99 91.82,-57.99 "/>
+<text text-anchor="middle" x="74.83" y="-24.8" font-family="arial" font-size="14.00">_end_</text>
+</g>
+<!-- node4&#45;&gt;_end_ -->
+<g id="edge4" class="edge">
+<title>node4&#45;&gt;_end_</title>
+<path fill="none" stroke="darkgreen" d="M74.83,-93.82C74.83,-85.84 74.83,-76.04 74.83,-66.53"/>
+<polygon fill="darkgreen" stroke="darkgreen" points="77.63,-66.3 74.83,-58.3 72.03,-66.3 77.63,-66.3"/>
+</g>
+<!-- greaterThan6 -->
+<g id="node7" class="node">
+<title>greaterThan6</title>
+<path fill="none" stroke="#b2dfee" d="M63.16,-199.18C63.16,-199.18 11.84,-186.81 11.84,-186.81 6.01,-185.4 6.01,-182.59 11.84,-181.18 11.84,-181.18 63.16,-168.81 63.16,-168.81 68.99,-167.4 80.66,-167.4 86.49,-168.81 86.49,-168.81 137.81,-181.18 137.81,-181.18 143.65,-182.59 143.65,-185.4 137.81,-186.81 137.81,-186.81 86.49,-199.18 86.49,-199.18 80.66,-200.59 68.99,-200.59 63.16,-199.18"/>
+<text text-anchor="start" x="38.83" y="-180.99" font-family="arial" font-size="10.00">greater than 6?</text>
+</g>
+<!-- node3&#45;&gt;greaterThan6 -->
+<g id="edge5" class="edge">
+<title>node3&#45;&gt;greaterThan6</title>
+<path fill="none" stroke="darkgreen" d="M53.75,-237.69C57.29,-228.83 61.65,-217.93 65.49,-208.34"/>
+<polygon fill="darkgreen" stroke="darkgreen" points="68.19,-209.13 68.56,-200.66 62.99,-207.05 68.19,-209.13"/>
+</g>
+<!-- greaterThan6&#45;&gt;node2 -->
+<g id="edge7" class="edge">
+<title>greaterThan6&#45;&gt;node2</title>
+<path fill="none" stroke="darkgreen" stroke-dasharray="5,2" d="M77.94,-201.47C80.87,-217.03 84.83,-237.99 84.83,-237.99 84.83,-237.99 84.83,-273.99 84.83,-273.99 84.83,-273.99 82.13,-288.28 79.54,-302.02"/>
+<polygon fill="darkgreen" stroke="darkgreen" points="76.78,-301.55 78.05,-309.93 82.28,-302.59 76.78,-301.55"/>
+</g>
+<!-- greaterThan6&#45;&gt;node4 -->
+<g id="edge6" class="edge">
+<title>greaterThan6&#45;&gt;node4</title>
+<path fill="none" stroke="darkgreen" stroke-dasharray="5,2" d="M74.83,-165.69C74.83,-157.38 74.83,-147.27 74.83,-138.13"/>
+<polygon fill="darkgreen" stroke="darkgreen" points="77.63,-138.1 74.83,-130.1 72.03,-138.1 77.63,-138.1"/>
+</g>
+</g>
+</svg>
