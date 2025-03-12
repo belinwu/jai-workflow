@@ -8,6 +8,8 @@ import lombok.NonNull;
  * Represents a transition between two states in a workflow.
  * The states can be instances of {@link Node} or {@link WorkflowStateName}.
  *
+ * @param from the starting state of the transition, could be an instance of {@link Node}, {@link io.github.czelabueno.jai.workflow.node.Conditional} or {@link WorkflowStateName}
+ * @param to   the ending state of the transition, could be an instance of {@link Node}, {@link io.github.czelabueno.jai.workflow.node.Conditional} or {@link WorkflowStateName}
  */
 public record Transition (TransitionState from, TransitionState to) {
 

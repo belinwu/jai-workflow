@@ -38,6 +38,7 @@ public interface GraphImageGenerator {
      * Generates a graph image from the given list of transitions and saves it to the given output path.
      *
      * @param transitions the list of transitions to generate the graph image from
+     * @param outputPath the path to save the generated graph image
      * @param format the format of the generated image
      * @param styles the styles to apply to the generated image
      * @throws IOException if an I/O error occurs during image generation

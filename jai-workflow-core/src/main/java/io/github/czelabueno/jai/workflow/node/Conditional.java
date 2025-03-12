@@ -27,6 +27,7 @@ public class Conditional<T> implements TransitionState {
     /**
      * Constructs a Conditional with the specified condition function and valid node types list.
      *
+     * @param name the name of the conditional node
      * @param condition the condition function to evaluate
      * @param expectedNodes the list of nodes expected from the condition function
      * @throws NullPointerException if the condition function or expected node list is null
@@ -64,6 +65,7 @@ public class Conditional<T> implements TransitionState {
     /**
      * Creates a new Conditional with the specified condition function.
      *
+     * @param name the name of the conditional node
      * @param condition the condition function to evaluate
      * @param expectedNodes the list of nodes expected from the condition function
      * @param <T> the stateful bean as input to the condition function

@@ -53,6 +53,7 @@ public interface StateWorkflow<T> {
      * Sets the starting node of the workflow.
      *
      * @param startNode the starting node
+     * @return the state workflow with the starting node set
      */
     StateWorkflow startNode(Node<T,?> startNode);
 
@@ -88,7 +89,9 @@ public interface StateWorkflow<T> {
     /**
      * Generates an image of the workflow and saves it to the specified output path.
      *
+     * @param format the format of the image
      * @param outputPath the path to save the workflow image
+     * @param styleAttributes the style attributes to apply to the workflow image
      * @throws IOException if an I/O error occurs
      */
     void generateWorkflowImage(Format format, String outputPath, List<StyleAttribute> styleAttributes) throws IOException;
@@ -233,7 +236,7 @@ public interface StateWorkflow<T> {
      * @param format the format of the image
      * @param styleAttributes the style attributes to apply to the workflow image
      * @return the BufferedImage representation of the computed workflow graph
-     * @throws IOException if an I/O error occurs
+     * @throws RuntimeException if an error occurs during image generation
      */
     BufferedImage generateComputedWorkflowBufferedImage(Format format, List<StyleAttribute> styleAttributes) throws RuntimeException;
 

@@ -359,6 +359,11 @@ public class DefaultStateWorkflow<T> implements StateWorkflow<T> {
                 .collect(toUnmodifiableList());
     }
 
+    /**
+     * Returns true if the workflow has been run.
+     *
+     * @return true if the workflow has been run, false otherwise
+     */
     public Boolean wasRun() {
         return !this.computedTransitions.isEmpty();
     }
@@ -379,6 +384,11 @@ public class DefaultStateWorkflow<T> implements StateWorkflow<T> {
         return imageGenerator(graphImageGenerator, format, styleAttributes);
     }
 
+    /**
+     * Returns a string representation of the workflow.
+     *
+     * @return a string representation of the workflow
+     */
     public String prettyTransitions() {
         StringBuilder sb = new StringBuilder();
         for (ComputedTransition transition : getComputedTransitions()) {
@@ -439,36 +449,75 @@ public class DefaultStateWorkflow<T> implements StateWorkflow<T> {
         return new Builder<>();
     }
 
+    /**
+     * A builder for the DefaultStateWorkflow class.
+     *
+     * @param <T> the type of the stateful bean
+     */
     public static class Builder<T> {
         private T statefulBean;
         private List<Transition> addEdges = new ArrayList<>();
         private List<Node<T, ?>> addNodes = new ArrayList<>();
         private GraphImageGenerator graphImageGenerator;
 
+        /**
+         * Constructs a new builder with the specified stateful bean.
+         *
+         * @param statefulBean the stateful bean to use in the workflow
+         */
         public Builder<T> statefulBean(T statefulBean) {
             this.statefulBean = statefulBean;
             return this;
         }
 
+        /**
+         * Adds the specified edges to the workflow.
+         *
+         * @param edges the edges to add to the workflow
+         * @return this builder
+         */
         public Builder<T> addEdges(Transition... edges) {
             this.addEdges.addAll(Arrays.asList(edges));
             return this;
         }
 
+        /**
+         * Adds the specified nodes to the workflow.
+         *
+         * @param nodes the nodes to add to the workflow
+         * @return this builder
+         */
         public Builder<T> addNodes(Node<T, ?>... nodes) {
             this.addNodes.addAll(Arrays.asList(nodes));
             return this;
         }
 
+        /**
+         * Adds the specified graph image generator to the workflow.
+         *
+         * @param graphImageGenerator the graph image generator to add to the workflow
+         * @return this builder
+         */
         public Builder<T> graphImageGenerator(GraphImageGenerator graphImageGenerator) {
             this.graphImageGenerator = graphImageGenerator;
             return this;
         }
 
+        /**
+         * Builds a new DefaultStateWorkflow instance with the specified stateful bean.
+         *
+         * @param startNode the starting node of the workflow
+         * @return a new DefaultStateWorkflow instance
+         */
         public DefaultStateWorkflow<T> build(Node<T,?> startNode) {
             return this.build().startNode(startNode);
         }
 
+        /**
+         * Builds a new DefaultStateWorkflow instance with the specified stateful bean.
+         *
+         * @return a new DefaultStateWorkflow instance
+         */
         public DefaultStateWorkflow<T> build() {
             return new DefaultStateWorkflow<>(this);
         }
