@@ -131,7 +131,7 @@ class JAiWorkflowIT {
                 .withMessage("The last node of the workflow must be a StreamingNode to run in stream mode");
     }
 
-    @SneakyThrows
+    @SneakyThrows // I/O exceptions are caught
     @Test
     void should_answer_stream_question() {
         // given

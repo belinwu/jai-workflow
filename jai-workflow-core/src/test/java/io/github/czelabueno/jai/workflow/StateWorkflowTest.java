@@ -240,14 +240,16 @@ class StateWorkflowTest {
         myWorkflow.runStream(node -> {
             assertThat(node.getName()).containsIgnoringCase("node");
             if (node.getName().equals("node1")) assertThat(node.hasLabel("Split")).isTrue();
-            if (node.getName().equals("node2") || node.getName().equals("node3") || node.getName().equals("node4") || node.getName().equals("node5")) {
+            if (node.getName().equals("node2") || node.getName().equals("node3")
+                    || node.getName().equals("node4") || node.getName().equals("node5")) {
                 assertThat(node.hasLabel("Parallel")).isTrue();
             }
             if (node.getName().equals("node6")) assertThat(node.hasLabel("Merge")).isTrue();
         });
 
         // then
-        assertEquals(8, myWorkflow.getComputedTransitions().size()); // start -> node1 -> [node2 -> node4, node3 -> node5] -> node6 -> end
+        // start -> node1 -> [node2 -> node4, node3 -> node5] -> node6 -> end
+        assertEquals(8, myWorkflow.getComputedTransitions().size());
     }
 
     @Test
@@ -267,7 +269,8 @@ class StateWorkflowTest {
             assertThat(node.output()).asString().containsIgnoringCase("processed function");
         });
         // then
-        assertEquals(8, myWorkflow.getComputedTransitions().size()); // start -> node1 -> node2 -> node3 -> cond -> node2 -> node3 -> cond-> node4 -> end
+        // start -> node1 -> node2 -> node3 -> cond -> node2 -> node3 -> cond-> node4 -> end
+        assertEquals(8, myWorkflow.getComputedTransitions().size());
         assertEquals(15, myStatefulBean.value);
     }
 
